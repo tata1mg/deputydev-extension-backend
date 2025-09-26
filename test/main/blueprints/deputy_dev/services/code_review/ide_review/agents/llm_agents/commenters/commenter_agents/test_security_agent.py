@@ -1,10 +1,9 @@
 from unittest.mock import Mock
 
 import pytest
-
 from deputydev_core.llm_handler.core.handler import LLMHandler
 from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
-from app.backend_common.services.llm.llm_service_manager import LLMServiceManager
+
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentTypes,
 )

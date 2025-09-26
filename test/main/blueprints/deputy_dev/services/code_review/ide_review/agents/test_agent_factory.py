@@ -72,11 +72,11 @@ class TestAgentFactory:
         mock_llm_handler = Mock()
         include_agent_types = [AgentTypes.CODE_MAINTAINABILITY]
 
-        with patch.object(AgentFactory, 'get_code_review_agents', create=True) as mock_get_agents:
+        with patch.object(AgentFactory, "get_code_review_agents", create=True) as mock_get_agents:
             # Mock the return value
             expected_agents = [Mock(), Mock()]
             mock_get_agents.return_value = expected_agents[:1]  # Only one agent for include filter
-            
+
             # Act
             result = AgentFactory.get_code_review_agents(
                 valid_agents_and_init_params=valid_agents_and_init_params,
@@ -99,11 +99,11 @@ class TestAgentFactory:
         mock_llm_handler = Mock()
         exclude_agent_types = [AgentTypes.CODE_COMMUNICATION]
 
-        with patch.object(AgentFactory, 'get_code_review_agents', create=True) as mock_get_agents:
+        with patch.object(AgentFactory, "get_code_review_agents", create=True) as mock_get_agents:
             # Mock the return value - exclude one agent type
             expected_agents = [Mock(), Mock()]
             mock_get_agents.return_value = expected_agents[:1]  # Only one agent after exclusion
-            
+
             # Act
             result = AgentFactory.get_code_review_agents(
                 valid_agents_and_init_params=valid_agents_and_init_params,
@@ -155,10 +155,10 @@ class TestAgentFactory:
         mock_context_service = Mock()
         mock_llm_handler = Mock()
 
-        with patch.object(AgentFactory, 'get_code_review_agents', create=True) as mock_get_agents:
+        with patch.object(AgentFactory, "get_code_review_agents", create=True) as mock_get_agents:
             # Mock empty result for empty input
             mock_get_agents.return_value = []
-            
+
             # Act
             result = AgentFactory.get_code_review_agents(
                 valid_agents_and_init_params=[], context_service=mock_context_service, llm_handler=mock_llm_handler
@@ -174,11 +174,11 @@ class TestAgentFactory:
         mock_comments = [Mock(spec=ParsedCommentData)]
         mock_llm_handler = Mock()
 
-        with patch.object(AgentFactory, 'get_review_finalization_agents', create=True) as mock_get_finalization_agents:
+        with patch.object(AgentFactory, "get_review_finalization_agents", create=True) as mock_get_finalization_agents:
             # Mock the return value
             expected_agents = [Mock(), Mock()]
             mock_get_finalization_agents.return_value = expected_agents[:1]  # Only one for include filter
-            
+
             # Test with include filter
             result_include = AgentFactory.get_review_finalization_agents(
                 context_service=mock_context_service,
@@ -190,7 +190,7 @@ class TestAgentFactory:
 
             # Reset mock for exclude filter test
             mock_get_finalization_agents.return_value = expected_agents[:1]  # Only one after exclusion
-            
+
             # Test with exclude filter
             result_exclude = AgentFactory.get_review_finalization_agents(
                 context_service=mock_context_service,

@@ -27,13 +27,13 @@ from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
 )
+from deputydev_core.llm_handler.providers.openai.llm_provider import OpenAI
 
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
     TextBlockData,
     ToolUseRequestData,
 )
-from deputydev_core.llm_handler.providers.openai.llm_provider import OpenAI
 
 # Import fixtures
 

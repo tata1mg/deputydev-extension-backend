@@ -29,10 +29,9 @@ from deputydev_core.llm_handler.dataclasses.unified_conversation_turn import (
     UnifiedToolResponseConversationTurnContent,
     UserConversationTurn,
 )
+from deputydev_core.llm_handler.models.dto.message_thread_dto import MessageCallChainCategory
 
 from app.backend_common.models.dto.message_thread_dto import LLModels, MessageType
-from deputydev_core.llm_handler.models.dto.message_thread_dto import MessageCallChainCategory
-from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import PromptFeatures
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ActorType,
     AgentChatDTO,
@@ -48,6 +47,7 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     TaskCompletionBlock,
     ToolUseResponseInput,
 )
+from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import PromptFeatures
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.dataclasses.main import (
     CodeBlockDelta,
     CodeBlockEnd,
@@ -89,7 +89,9 @@ class TestQuerySolverSolveQuery:
                 find_or_create=AsyncMock(return_value=None),
                 update_session_summary=AsyncMock(),
                 get_by_id=AsyncMock(return_value=None),
-                create_extension_session=AsyncMock(return_value=MagicMock(current_model=LLModels.GPT_4_POINT_1_NANO.value)),
+                create_extension_session=AsyncMock(
+                    return_value=MagicMock(current_model=LLModels.GPT_4_POINT_1_NANO.value)
+                ),
                 update_session_llm_model=AsyncMock(),
             ),
             patch.object(
@@ -1103,7 +1105,12 @@ class TestQuerySolverGetLastQueryMessageForSession:
     ):
         """Test when no query messages exist."""
         # Create message threads without QUERY type or correct prompt_type
-        from deputydev_core.llm_handler.models.dto.message_thread_dto import MessageThreadActor, TextBlockContent, TextBlockData
+        from deputydev_core.llm_handler.models.dto.message_thread_dto import (
+            MessageThreadActor,
+            TextBlockContent,
+            TextBlockData,
+        )
+
         from app.backend_common.repository.message_threads.repository import MessageThreadsRepository
 
         non_query_messages = [
@@ -1200,7 +1207,9 @@ class TestQuerySolverGetLastQueryMessageForSession:
             mock_get_messages.assert_called_once()
             call_args = mock_get_messages.call_args
             assert call_args[0] == (123,)  # Positional arguments
-            assert call_args[1]['call_chain_category'].value == MessageCallChainCategory.CLIENT_CHAIN.value  # Keyword arguments
+            assert (
+                call_args[1]["call_chain_category"].value == MessageCallChainCategory.CLIENT_CHAIN.value
+            )  # Keyword arguments
 
 
 class TestQuerySolverGetAgentInstanceByName:
@@ -3314,7 +3323,9 @@ class TestOriginalQuerySolverMethods:
                 find_or_create=AsyncMock(return_value=None),
                 update_session_summary=AsyncMock(),
                 get_by_id=AsyncMock(return_value=None),
-                    create_extension_session=AsyncMock(return_value=MagicMock(current_model=LLModels.GPT_4_POINT_1_NANO.value)),
+                create_extension_session=AsyncMock(
+                    return_value=MagicMock(current_model=LLModels.GPT_4_POINT_1_NANO.value)
+                ),
                 update_session_llm_model=AsyncMock(),
             ),
             patch.object(
@@ -3388,7 +3399,9 @@ class TestOriginalQuerySolverMethods:
                 find_or_create=AsyncMock(return_value=None),
                 update_session_summary=AsyncMock(),
                 get_by_id=AsyncMock(return_value=None),
-                    create_extension_session=AsyncMock(return_value=MagicMock(current_model=LLModels.GPT_4_POINT_1_NANO.value)),
+                create_extension_session=AsyncMock(
+                    return_value=MagicMock(current_model=LLModels.GPT_4_POINT_1_NANO.value)
+                ),
                 update_session_llm_model=AsyncMock(),
             ),
             patch.object(

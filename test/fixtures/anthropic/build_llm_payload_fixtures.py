@@ -20,6 +20,15 @@ from deputydev_core.llm_handler.dataclasses.main import (
     PromptCacheConfig,
     UserAndSystemMessages,
 )
+from deputydev_core.llm_handler.dataclasses.unified_conversation_turn import (
+    AssistantConversationTurn,
+    ToolConversationTurn,
+    UnifiedImageConversationTurnContent,
+    UnifiedTextConversationTurnContent,
+    UnifiedToolRequestConversationTurnContent,
+    UnifiedToolResponseConversationTurnContent,
+    UserConversationTurn,
+)
 
 from app.backend_common.models.dto.chat_attachments_dto import ChatAttachmentsDTO
 from app.backend_common.models.dto.message_thread_dto import (
@@ -42,15 +51,6 @@ from app.backend_common.models.dto.message_thread_dto import (
 from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import (
     Attachment,
     ChatAttachmentDataWithObjectBytes,
-)
-from deputydev_core.llm_handler.dataclasses.unified_conversation_turn import (
-    AssistantConversationTurn,
-    ToolConversationTurn,
-    UnifiedImageConversationTurnContent,
-    UnifiedTextConversationTurnContent,
-    UnifiedToolRequestConversationTurnContent,
-    UnifiedToolResponseConversationTurnContent,
-    UserConversationTurn,
 )
 
 # =====================
