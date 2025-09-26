@@ -9,9 +9,9 @@ session states, and retry reasons.
 from datetime import datetime
 
 import pytest
+from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
 
 from app.backend_common.models.dto.extension_sessions_dto import ExtensionSessionDTO
-from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ActorType,
     AgentChatCreateRequest,

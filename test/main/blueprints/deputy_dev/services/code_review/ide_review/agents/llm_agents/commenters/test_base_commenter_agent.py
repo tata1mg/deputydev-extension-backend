@@ -14,8 +14,8 @@ from deputydev_core.llm_handler.dataclasses.main import (
     ConversationTool,
     NonStreamingParsedLLMCallResponse,
 )
-
 from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
+
 from app.main.blueprints.deputy_dev.models.dto.review_agent_chats_dto import (
     ActorType,
     MessageType,

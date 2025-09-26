@@ -138,6 +138,41 @@ class QuerySolver:
         generated_summary = llm_response.parsed_content[0].get("summary")
         await ExtensionSessionsRepository.update_session_summary(session_id=session_id, summary=generated_summary)
 
+
+    def _format_tool_response(
+        self, tool_response: ToolUseResponseInput, vscode_env: Optional[str], focus_items: Optional[List[FocusItem]]
+    ) -> Dict[str, Any]:
+        """Handle and structure tool responses based on tool type."""
+
+        if tool_response.status != ToolStatus.COMPLETED:
+            return tool_response.response if tool_response.response else {}
+
+        if tool_response.tool_name == "focused_snippets_searcher":
+            return {
+                "chunks": [
+                    ChunkInfo(**chunk).get_xml()
+                    for search_response in tool_response.response["batch_chunks_search"]["response"]
+                    for chunk in search_response["chunks"]
+                ],
+            }
+
+        if tool_response.tool_name == "iterative_file_reader":
+            markdown = LLMResponseFormatter.format_iterative_file_reader_response(tool_response.response["data"])
+            return {"Tool Response": markdown}
+
+        if tool_response.tool_name == "grep_search":
+            markdown = LLMResponseFormatter.format_grep_tool_response(tool_response.response)
+            return {"Tool Response": markdown}
+
+        if tool_response.tool_name == "ask_user_input":
+            json_response = LLMResponseFormatter.format_ask_user_input_response(
+                tool_response.response, vscode_env, focus_items
+            )
+            return json_response
+
+        return tool_response.response if tool_response.response else {}
+
+
     async def _store_tool_response_in_chat_chain(
         self,
         tool_response: ToolUseResponseInput,
@@ -758,6 +793,8 @@ class QuerySolver:
                 ),
             )
 
+
+
     async def solve_query(
         self,
         payload: QuerySolverInput,
@@ -953,36 +990,3 @@ class QuerySolver:
 
         else:
             raise ValueError("Invalid input")
-
-    def _format_tool_response(
-        self, tool_response: ToolUseResponseInput, vscode_env: Optional[str], focus_items: Optional[List[FocusItem]]
-    ) -> Dict[str, Any]:
-        """Handle and structure tool responses based on tool type."""
-
-        if tool_response.status != ToolStatus.COMPLETED:
-            return tool_response.response if tool_response.response else {}
-
-        if tool_response.tool_name == "focused_snippets_searcher":
-            return {
-                "chunks": [
-                    ChunkInfo(**chunk).get_xml()
-                    for search_response in tool_response.response["batch_chunks_search"]["response"]
-                    for chunk in search_response["chunks"]
-                ],
-            }
-
-        if tool_response.tool_name == "iterative_file_reader":
-            markdown = LLMResponseFormatter.format_iterative_file_reader_response(tool_response.response["data"])
-            return {"Tool Response": markdown}
-
-        if tool_response.tool_name == "grep_search":
-            markdown = LLMResponseFormatter.format_grep_tool_response(tool_response.response)
-            return {"Tool Response": markdown}
-
-        if tool_response.tool_name == "ask_user_input":
-            json_response = LLMResponseFormatter.format_ask_user_input_response(
-                tool_response.response, vscode_env, focus_items
-            )
-            return json_response
-
-        return tool_response.response if tool_response.response else {}

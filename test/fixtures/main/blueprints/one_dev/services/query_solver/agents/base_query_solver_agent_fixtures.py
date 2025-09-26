@@ -13,8 +13,8 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from deputydev_core.llm_handler.dataclasses.main import ConversationTool
-
 from deputydev_core.llm_handler.models.dto.chat_attachments_dto import ChatAttachmentsDTO
+
 from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import (
     Attachment,
     ChatAttachmentDataWithObjectBytes,
