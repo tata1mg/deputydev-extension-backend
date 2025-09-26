@@ -3,5 +3,5 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 )
 
 
-class SonomaSkyAlphaCustomCodeQuerySolverPrompt(BaseGrokCustomCodeQuerySolverPrompt):
+class Grok4FastCustomCodeQuerySolverPrompt(BaseGrokCustomCodeQuerySolverPrompt):
     pass

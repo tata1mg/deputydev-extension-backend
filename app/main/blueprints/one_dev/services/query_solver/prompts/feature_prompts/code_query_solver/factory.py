@@ -25,6 +25,9 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.gpt_4_point_1_handler import (
     Gpt4Point1CustomCodeQuerySolverPromptHandler,
 )
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.gpt_5_codex_handler import (
+    Gpt5CodexCustomCodeQuerySolverPromptHandler,
+)
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.gpt_5_handler import (
     Gpt5CustomCodeQuerySolverPromptHandler,
 )
@@ -33,6 +36,9 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 )
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.gpt_5_nano_handler import (
     Gpt5NanoCustomCodeQuerySolverPromptHandler,
+)
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.grok_4_fast_handler import (
+    Grok4FastCustomCodeQuerySolverPromptHandler,
 )
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.grok_code_fast_1_handler import (
     GrokCodeFast1CustomCodeQuerySolverPromptHandler,
@@ -43,31 +49,25 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.qwen_3_coder_handler import (
     Qwen3CoderCustomCodeQuerySolverPromptHandler,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.sonoma_dusk_alpha_handler import (
-    SonomaDuskAlphaCustomCodeQuerySolverPromptHandler,
-)
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.sonoma_sky_alpha_handler import (
-    SonomaSkyAlphaCustomCodeQuerySolverPromptHandler,
-)
 
 
 class CodeQuerySolverPromptFactory(BaseFeaturePromptFactory):
     custom_code_query_solver_prompts: Dict[LLModels, Type[BasePrompt]] = {
         LLModels.CLAUDE_3_POINT_7_SONNET: Claude3Point7CustomCodeQuerySolverPromptHandler,
+        LLModels.CLAUDE_4_SONNET: Claude4CustomCodeQuerySolverPromptHandler,
+        LLModels.CLAUDE_4_SONNET_THINKING: Claude4ThinkingCustomCodeQuerySolverPromptHandler,
         LLModels.GEMINI_2_POINT_5_PRO: Gemini2Point5ProCustomCodeQuerySolverPromptHandler,
         LLModels.GEMINI_2_POINT_5_FLASH: Gemini2Point5FlashCustomCodeQuerySolverPromptHandler,
         LLModels.GEMINI_2_POINT_5_FLASH_LITE: Gemini2Point5FlashLiteCustomCodeQuerySolverPromptHandler,
-        LLModels.CLAUDE_4_SONNET: Claude4CustomCodeQuerySolverPromptHandler,
-        LLModels.CLAUDE_4_SONNET_THINKING: Claude4ThinkingCustomCodeQuerySolverPromptHandler,
-        LLModels.QWEN_3_CODER: Qwen3CoderCustomCodeQuerySolverPromptHandler,
         LLModels.KIMI_K2: KimiK2CustomCodeQuerySolverPromptHandler,
         LLModels.OPENROUTER_GPT_5: Gpt5CustomCodeQuerySolverPromptHandler,
-        LLModels.OPENROUTER_GROK_CODE_FAST_1: GrokCodeFast1CustomCodeQuerySolverPromptHandler,
         LLModels.OPENROUTER_GPT_5_MINI: Gpt5MiniCustomCodeQuerySolverPromptHandler,
         LLModels.OPENROUTER_GPT_5_NANO: Gpt5NanoCustomCodeQuerySolverPromptHandler,
+        LLModels.OPENROUTER_GPT_5_CODEX: Gpt5CodexCustomCodeQuerySolverPromptHandler,
         LLModels.OPENROUTER_GPT_4_POINT_1: Gpt4Point1CustomCodeQuerySolverPromptHandler,
-        LLModels.OPENROUTER_SONOMA_DUSK_ALPHA: SonomaDuskAlphaCustomCodeQuerySolverPromptHandler,
-        LLModels.OPENROUTER_SONOMA_SKY_ALPHA: SonomaSkyAlphaCustomCodeQuerySolverPromptHandler,
+        LLModels.OPENROUTER_GROK_4_FAST: Grok4FastCustomCodeQuerySolverPromptHandler,
+        LLModels.OPENROUTER_GROK_CODE_FAST_1: GrokCodeFast1CustomCodeQuerySolverPromptHandler,
+        LLModels.QWEN_3_CODER: Qwen3CoderCustomCodeQuerySolverPromptHandler,
     }
 
     @classmethod
