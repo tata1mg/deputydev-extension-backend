@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 from functools import wraps
 
+import numpy as np
 import ujson as json
 
 from .constants import DEFAULT_CACHE_LABEL, Encoding
@@ -254,7 +255,7 @@ class BaseServiceCache:
         keys = list(map(lambda key: cls.prefixed_key(key), keys))
         result = await cache_registry[cls._host].mget(keys)
         if result:
-            result = list(map(lambda value: json.loads(value) if value else None, result))
+            result = list(map(lambda value: value if value else None, result))
         return result
 
     ###############################
@@ -411,18 +412,27 @@ class BaseServiceCache:
         result = await cache_registry[cls._host].sismember(cls.prefixed_key(key), value, namespace=namespace)
         return result
 
-    # FIXME: raise custom exception
     @classmethod
     async def mset_with_expire(cls, mapping: dict[str, any], expire=None):
+        """Drop-in replacement: store embeddings safely (np.ndarray → bytes, others → JSON)."""
         if not expire:
             expire = cls._expire_in_sec
 
         if len(mapping.keys()) > cls._mset_with_expire_max_keys_limit:
-            raise Exception(
-                f"Please use batch processing for keys count > {cls._mset_with_expire_max_keys_limit}"  # noqa : E501
-            )
-        mapping = {cls.prefixed_key(k): json.dumps(v) for k, v in mapping.items()}
-        await cache_registry[cls._host].mset_with_expire(mapping, expire)
+            raise Exception(f"Please use batch processing for keys count > {cls._mset_with_expire_max_keys_limit}")
+
+        serialized = {}
+        for k, v in mapping.items():
+            if isinstance(v, np.ndarray):
+                v = v.astype(np.float32).tobytes()
+            else:
+                if v is not None:
+                    v = json.dumps(v)
+                else:
+                    continue  # skip None values
+            serialized[cls.prefixed_key(k)] = v
+
+        await cache_registry[cls._host].mset_with_expire(serialized, expire)
 
     # FIXME: raise custom exception
     @classmethod

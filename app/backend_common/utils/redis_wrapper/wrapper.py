@@ -161,7 +161,8 @@ class RedisWrapper:
         await self._redis.mset(mapping)
 
     async def mget(self, keys):
-        return await self._redis.mget(keys)
+        raw_values = await self._redis.execute_command("MGET", *keys, **{"NEVER_DECODE": True})
+        return [v if v is None else bytes(v) for v in raw_values]
 
     async def hset(self, key: str, mapping):
         await self._redis.hset(key, mapping=mapping)
@@ -252,7 +253,7 @@ class RedisWrapper:
         return await self._redis.sismember(key, value)
 
     async def mset_with_expire(self, mapping: dict, ex=None):
-        pipeline = self._redis.pipeline()
+        pipeline = self._redis.pipeline(transaction=False)
         for key, value in mapping.items():
             pipeline.set(key, value, ex=ex)
         await pipeline.execute()
