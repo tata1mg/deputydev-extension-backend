@@ -18,6 +18,13 @@ from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingResponse,
     StreamingResponse,
 )
+from deputydev_core.llm_handler.dataclasses.unified_conversation_turn import (
+    AssistantConversationTurn,
+    ToolConversationTurn,
+    UnifiedConversationTurn,
+    UserConversationTurn,
+)
+from deputydev_core.llm_handler.providers.anthropic.llm_provider import Anthropic
 
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
@@ -28,13 +35,6 @@ from app.backend_common.models.dto.message_thread_dto import (
     ToolUseRequestContent,
     ToolUseRequestData,
 )
-from deputydev_core.llm_handler.dataclasses.unified_conversation_turn import (
-    AssistantConversationTurn,
-    ToolConversationTurn,
-    UnifiedConversationTurn,
-    UserConversationTurn,
-)
-from deputydev_core.llm_handler.providers.anthropic.llm_provider import Anthropic
 from test.fixtures.anthropic.remaining_methods_fixtures import *
 
 
@@ -285,9 +285,7 @@ class TestAnthropicRegionAndServiceClient:
         self, anthropic_provider: Anthropic, sample_model_config: Dict[str, Any]
     ) -> None:
         """Test that service clients are cached by region."""
-        with patch(
-            "deputydev_core.llm_handler.providers.anthropic.llm_provider.BedrockServiceClient"
-        ) as mock_bedrock:
+        with patch("deputydev_core.llm_handler.providers.anthropic.llm_provider.BedrockServiceClient") as mock_bedrock:
             mock_client = MagicMock()
             mock_bedrock.return_value = mock_client
 
@@ -325,9 +323,7 @@ class TestAnthropicRegionAndServiceClient:
         self, anthropic_provider: Anthropic, sample_model_config: Dict[str, Any]
     ) -> None:
         """Test that service client method uses consistent region selection."""
-        with patch(
-            "deputydev_core.llm_handler.providers.anthropic.llm_provider.BedrockServiceClient"
-        ) as mock_bedrock:
+        with patch("deputydev_core.llm_handler.providers.anthropic.llm_provider.BedrockServiceClient") as mock_bedrock:
             mock_client = MagicMock()
             mock_bedrock.return_value = mock_client
 

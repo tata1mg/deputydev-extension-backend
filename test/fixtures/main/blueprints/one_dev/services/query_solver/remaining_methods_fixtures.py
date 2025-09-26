@@ -13,8 +13,6 @@ import pytest
 from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
 )
-
-from app.backend_common.models.dto.extension_sessions_dto import ExtensionSessionData
 from deputydev_core.llm_handler.models.dto.message_thread_dto import (
     LLModels,
     MessageCallChainCategory,
@@ -23,6 +21,8 @@ from deputydev_core.llm_handler.models.dto.message_thread_dto import (
     TextBlockContent,
     TextBlockData,
 )
+
+from app.backend_common.models.dto.extension_sessions_dto import ExtensionSessionData
 from app.main.blueprints.one_dev.constants.tools import ToolStatus
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ActorType,
@@ -161,7 +161,7 @@ def mock_multiple_query_solver_agents() -> List[QuerySolverAgentsDTO]:
 def mock_message_thread_dto() -> MessageThreadDTO:
     """Create mock message thread DTO."""
     from deputydev_core.llm_handler.models.dto.message_thread_dto import MessageThreadActor
-    
+
     return MessageThreadDTO(
         id=1,
         session_id=123,
@@ -182,7 +182,7 @@ def mock_message_thread_dto() -> MessageThreadDTO:
 def mock_multiple_message_threads() -> List[MessageThreadDTO]:
     """Create multiple mock message thread DTOs."""
     from deputydev_core.llm_handler.models.dto.message_thread_dto import MessageThreadActor
-    
+
     return [
         MessageThreadDTO(
             id=1,

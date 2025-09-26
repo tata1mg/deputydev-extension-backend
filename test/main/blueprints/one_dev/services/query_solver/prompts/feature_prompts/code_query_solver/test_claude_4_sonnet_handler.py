@@ -100,7 +100,9 @@ class TestClaude4CustomCodeQuerySolverPromptHandler:
         mock_streaming_response.content = mock_async_generator()
 
         events = []
-        async_iterator = await Claude4CustomCodeQuerySolverPromptHandler.get_parsed_streaming_events(mock_streaming_response)
+        async_iterator = await Claude4CustomCodeQuerySolverPromptHandler.get_parsed_streaming_events(
+            mock_streaming_response
+        )
         async for event in async_iterator:
             events.append(event)
 

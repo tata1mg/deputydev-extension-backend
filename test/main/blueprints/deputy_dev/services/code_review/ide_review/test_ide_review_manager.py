@@ -49,9 +49,9 @@ class TestIdeReviewManagerReviewDiff:
             patch(
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.IdeReviewContextService"
             ) as mock_context_service,
-                patch(
-                    "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.LLMServiceManager"
-                ) as mock_llm_service_manager,
+            patch(
+                "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.LLMServiceManager"
+            ) as mock_llm_service_manager,
             patch(
                 "app.main.blueprints.deputy_dev.services.code_review.ide_review.ide_review_manager.AgentFactory"
             ) as mock_agent_factory,
@@ -752,7 +752,9 @@ class TestIdeReviewManagerReviewDiffAdditionalScenarios:
             mock_ext_repo.db_get = AsyncMock(return_value=sample_extension_review_dto)
             mock_user_agent_repo.db_get = AsyncMock(return_value=sample_user_agent_dto)
             mock_context_service.return_value = MagicMock()
-            mock_llm_service_manager.return_value.create_llm_handler.side_effect = Exception("LLM handler initialization failed")
+            mock_llm_service_manager.return_value.create_llm_handler.side_effect = Exception(
+                "LLM handler initialization failed"
+            )
 
             # Execute and verify
             with patch.object(

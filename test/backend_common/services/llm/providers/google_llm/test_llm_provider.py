@@ -32,8 +32,6 @@ from deputydev_core.llm_handler.dataclasses.main import (
 
 from app.backend_common.models.dto.message_thread_dto import (
     LLModels,
-    TextBlockData,
-    ToolUseRequestData,
 )
 
 
@@ -171,11 +169,11 @@ def setup_comprehensive_mocks():
 
 
 # Import fixtures
-from test.fixtures.google.provider_fixtures import *
-from test.fixtures.google.unified_conversation_fixtures import *
 from test.fixtures.google.build_llm_payload_fixtures import *
-from test.fixtures.google.response_parsing_fixtures import *
+from test.fixtures.google.provider_fixtures import *
 from test.fixtures.google.remaining_methods_fixtures import *
+from test.fixtures.google.response_parsing_fixtures import *
+from test.fixtures.google.unified_conversation_fixtures import *
 
 
 class TestGoogleUnifiedConversationTurns:
@@ -542,7 +540,7 @@ class TestGoogleResponseParsing:
 
         content_block = result.content[0]
         # Check that we have a text block (either from core or app package)
-        assert hasattr(content_block, 'content') and hasattr(content_block.content, 'text')
+        assert hasattr(content_block, "content") and hasattr(content_block.content, "text")
         assert content_block.content.text == "Hello, I can help you with that!"
 
         # Check usage
@@ -564,7 +562,7 @@ class TestGoogleResponseParsing:
 
         content_block = result.content[0]
         # Check that we have a tool use request (either from core or app package)
-        assert hasattr(content_block, 'content') and hasattr(content_block.content, 'tool_name')
+        assert hasattr(content_block, "content") and hasattr(content_block.content, "tool_name")
         assert content_block.content.tool_name == "search_function"
         assert content_block.content.tool_input == {"query": "test query", "limit": 10}
 
@@ -629,8 +627,12 @@ class TestGoogleResponseParsing:
         assert len(result.content) == 2
 
         # Should have both text and tool use request (checking by attributes rather than exact type)
-        has_text_block = any(hasattr(content, 'content') and hasattr(content.content, 'text') for content in result.content)
-        has_tool_use = any(hasattr(content, 'content') and hasattr(content.content, 'tool_name') for content in result.content)
+        has_text_block = any(
+            hasattr(content, "content") and hasattr(content.content, "text") for content in result.content
+        )
+        has_tool_use = any(
+            hasattr(content, "content") and hasattr(content.content, "tool_name") for content in result.content
+        )
         assert has_text_block
         assert has_tool_use
 
