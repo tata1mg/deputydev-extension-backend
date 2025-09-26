@@ -51,6 +51,7 @@ In the `deputydev-extension-backend` configuration, you'll need to add your cred
 
 By default, `deputydev-auth` runs in fake auth mode for local development. If you prefer to integrate with Supabase, you can configure it, but you'll need to create your own frontend for the sign-in process.
 
+### Running the services
 Now, run the backend using the following command in `deputydev-extension-backend` (as it has the docker-compose file)
 ```
 docker compose up --build
