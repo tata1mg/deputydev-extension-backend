@@ -12,7 +12,7 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 )
 
 
-class SonomaAlphaReasoningThinkingParser:
+class ReasoningThinkingParser:
     def parse(self, event: ExtendedThinkingEvents) -> ThinkingBlockStart | ThinkingBlockDelta | ThinkingBlockEnd:
         if isinstance(event, ExtendedThinkingBlockStart):
             return ThinkingBlockStart(ignore_in_chat=True)
