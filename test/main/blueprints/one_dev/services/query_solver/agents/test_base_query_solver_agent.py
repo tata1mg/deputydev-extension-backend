@@ -12,11 +12,6 @@ from typing import Any, Dict, List
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
-from app.backend_common.models.dto.message_thread_dto import LLModels
-from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import (
-    Attachment,
-)
 from deputydev_core.llm_handler.dataclasses.agent import LLMHandlerInputs
 from deputydev_core.llm_handler.dataclasses.unified_conversation_turn import (
     AssistantConversationTurn,
@@ -27,6 +22,11 @@ from deputydev_core.llm_handler.dataclasses.unified_conversation_turn import (
     UnifiedToolRequestConversationTurnContent,
     UnifiedToolResponseConversationTurnContent,
     UserConversationTurn,
+)
+
+from app.backend_common.models.dto.message_thread_dto import LLModels
+from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import (
+    Attachment,
 )
 from app.backend_common.utils.dataclasses.main import ClientData
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
@@ -659,9 +659,8 @@ class TestQuerySolverAgent:
         from typing import List
 
         from deputydev_core.llm_handler.dataclasses.main import NonStreamingResponse, UserAndSystemMessages
-        from pydantic import BaseModel
-
         from deputydev_core.llm_handler.prompts.base_prompt import BasePrompt
+        from pydantic import BaseModel
 
         class MockPrompt(BasePrompt):
             model_name = LLModels.CLAUDE_3_POINT_7_SONNET
@@ -698,5 +697,7 @@ class TestQuerySolverAgent:
             assert len(previous_queries) == 1
             assert previous_queries[0] == "previous query"
 
-            mock_get_turns.assert_called_once_with(base_query_solver_input, mock_client_data, agent_chat_user_text, None)
+            mock_get_turns.assert_called_once_with(
+                base_query_solver_input, mock_client_data, agent_chat_user_text, None
+            )
             agent.prompt_factory.get_prompt.assert_called_once_with(model_name=LLModels.CLAUDE_3_POINT_7_SONNET)
