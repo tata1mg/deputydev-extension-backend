@@ -722,6 +722,16 @@ class QuerySolver:
             )
 
         if current_session.current_model != llm_model:
+            # TODO: remove after v15 Force upgrade
+            if (
+                llm_model == LLModels.OPENROUTER_GPT_4_POINT_1
+                and current_session.current_model == LLModels.GPT_4_POINT_1
+            ):
+                await asyncio.gather(
+                    ExtensionSessionsRepository.update_session_llm_model(session_id=session_id, llm_model=llm_model),
+                )
+                return  # no need to store a message in chat as the models are equivalent
+
             # update current model in session
             await asyncio.gather(
                 ExtensionSessionsRepository.update_session_llm_model(session_id=session_id, llm_model=llm_model),
