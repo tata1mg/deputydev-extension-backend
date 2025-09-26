@@ -1,4 +1,3 @@
-import json
 from typing import List, Optional
 
 import numpy as np
@@ -115,7 +114,7 @@ class OpenAIManager(BaseClient):
         try:
             for i, cache_value in enumerate(await CommonCache.mget(cache_keys)):
                 if cache_value:
-                    embeddings[i] = np.array(json.loads(cache_value))
+                    embeddings[i] = np.frombuffer(cache_value, dtype=np.float32)
         except Exception as e:  # noqa: BLE001
             logger.exception(e)
 
@@ -133,16 +132,13 @@ class OpenAIManager(BaseClient):
             embeddings[index] = new_embeddings[i]
 
         try:
-            for i in range(0, len(cache_keys), 100):
-                batch_keys = cache_keys[i : i + 100]
-                batch_embeddings = embeddings[i : i + 100]
+            for i in range(0, len(cache_keys), 10):
+                batch_keys = cache_keys[i : i + 10]
+                batch_embeddings = embeddings[i : i + 10]
 
                 # Store the current batch in Redis
                 await CommonCache.mset_with_expire(
-                    {
-                        cache_key: json.dumps(embedding.tolist())
-                        for cache_key, embedding in zip(batch_keys, batch_embeddings)
-                    }
+                    {cache_key: embedding for cache_key, embedding in zip(batch_keys, batch_embeddings)}
                 )
             embeddings = np.array(embeddings)
         except Exception:  # noqa: BLE001
