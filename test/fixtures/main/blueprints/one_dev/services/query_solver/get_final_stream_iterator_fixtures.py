@@ -50,9 +50,8 @@ def mock_llm_handler_for_stream() -> MagicMock:
     """Create a mock LLM handler for stream iterator tests."""
     from unittest.mock import Mock
 
-    from deputydev_core.llm_handler.dataclasses.main import NonStreamingParsedLLMCallResponse
-
     from deputydev_core.llm_handler.core.handler import LLMHandler
+    from deputydev_core.llm_handler.dataclasses.main import NonStreamingParsedLLMCallResponse
 
     handler = MagicMock(spec=LLMHandler)
 
