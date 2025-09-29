@@ -938,13 +938,6 @@
         },
         {
             "id": 6,
-            "display_name": "GPT 5 Nano",
-            "name": "OPENROUTER_GPT_5_NANO",
-            "provider": "OPENAI",
-            "multimodal": true
-        },
-        {
-            "id": 7,
             "display_name": "GPT 5 Codex",
             "name": "OPENROUTER_GPT_5_CODEX",
             "provider": "OPENAI",
@@ -960,56 +953,56 @@
             }
         },
         {
-            "id": 8,
+            "id": 7,
             "display_name": "GPT 4.1",
             "name": "OPENROUTER_GPT_4_POINT_1",
             "provider": "OPENAI",
             "multimodal": true
         },
         {
-            "id": 9,
+            "id": 8,
             "display_name": "Gemini 2.5 Pro",
             "name": "GEMINI_2_POINT_5_PRO",
             "provider": "GOOGLE",
             "multimodal": true
         },
         {
-            "id": 10,
+            "id": 9,
             "display_name": "Gemini 2.5 Flash",
             "name": "GEMINI_2_POINT_5_FLASH",
             "provider": "GOOGLE",
             "multimodal": true
         },
         {
-            "id": 11,
+            "id": 10,
             "display_name": "Gemini 2.5 Flash Lite",
             "name": "GEMINI_2_POINT_5_FLASH_LITE",
             "provider": "GOOGLE",
             "multimodal": true
         },
         {
-            "id": 12,
+            "id": 11,
             "display_name": "Qwen 3 Coder",
             "name": "QWEN_3_CODER",
             "provider": "OPEN SOURCE",
             "multimodal": false
         },
         {
-            "id": 13,
+            "id": 12,
             "display_name": "Kimi K2",
             "name": "KIMI_K2",
             "provider": "OPEN SOURCE",
             "multimodal": false
         },
         {
-            "id": 14,
+            "id": 13,
             "display_name": "Grok Code Fast 1",
             "name": "OPENROUTER_GROK_CODE_FAST_1",
             "provider": "xAI",
             "multimodal": false
         },
         {
-            "id": 15,
+            "id": 14,
             "display_name": "Grok 4 Fast",
             "name": "OPENROUTER_GROK_4_FAST",
             "provider": "xAI",
