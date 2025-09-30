@@ -1,4 +1,6 @@
 ARG SERVICE_NAME
+ARG SSH_PRIVATE_KEY
+ARG SSH_PUBLIC_KEY
 ARG USE_CONFIG_FROM_ROOT=false
 
 # ---------------- Builder Stage ----------------
@@ -9,11 +11,17 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
+RUN echo "$SSH_PRIVATE_KEY" > /root/.ssh/id_ed25519 && \
+    echo "$SSH_PUBLIC_KEY" > /root/.ssh/id_ed25519.pub && \
+    chmod 600 /root/.ssh/id_ed25519 && \
+    chmod 600 /root/.ssh/id_ed25519.pub
+
 # System deps for installs and diagnostics
 RUN apt-get update && apt-get install -y --no-install-recommends \
       git \
       curl \
       build-essential \
+      openssh-server \
     && rm -rf /var/lib/apt/lists/*
 
 # Install uv for fast, reproducible installs
