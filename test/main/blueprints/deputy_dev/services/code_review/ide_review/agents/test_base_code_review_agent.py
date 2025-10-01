@@ -15,8 +15,8 @@ from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
     UserAndSystemMessages,
 )
+from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
 
-from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels, LLMUsage
 from app.main.blueprints.deputy_dev.services.code_review.common.agents.dataclasses.main import (
     AgentRunResult,
     AgentTypes,

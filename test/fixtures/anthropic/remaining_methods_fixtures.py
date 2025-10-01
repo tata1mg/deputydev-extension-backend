@@ -7,7 +7,6 @@ from typing import Any, Dict, List
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
 from deputydev_core.llm_handler.dataclasses.unified_conversation_turn import (
     AssistantConversationTurn,
     ToolConversationTurn,

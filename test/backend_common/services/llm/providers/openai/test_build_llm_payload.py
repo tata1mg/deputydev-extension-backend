@@ -29,10 +29,10 @@ from deputydev_core.llm_handler.dataclasses.main import (
     PromptCacheConfig,
     UserAndSystemMessages,
 )
+from deputydev_core.llm_handler.providers.openai.llm_provider import OpenAI
 
 # Import necessary DTOs and classes
 from app.backend_common.models.dto.message_thread_dto import LLModels
-from deputydev_core.llm_handler.providers.openai.llm_provider import OpenAI
 
 # Import all build_llm_payload specific fixtures
 from test.fixtures.openai.build_llm_payload_fixtures import *
