@@ -51,6 +51,13 @@ In the `deputydev-extension-backend` configuration, you'll need to add your cred
 
 By default, `deputydev-auth` runs in fake auth mode for local development. If you prefer to integrate with Supabase, you can configure it, but you'll need to create your own frontend for the sign-in process.
 
+### Running the services
+Now, run the backend using the following command in `deputydev-extension-backend` (as it has the docker-compose file)
+```
+docker compose up --build
+```
+This should take a while, and will setup your services - deputydev-auth, deputydev-extension-backend and deputydev-binary.
+
 ## Step 3: Set Up VS Code Extension
 
 Navigate to the `deputydev-vscode-extension` folder and run:
@@ -78,3 +85,5 @@ And toggle USE_LOCAL_BINARY to true
 ```bash
 yarn build:all
 ```
+
+Now, run the extension using debug menu in VSCode and selecting Run Extension when opening the folder deputydev-vscode-extension
