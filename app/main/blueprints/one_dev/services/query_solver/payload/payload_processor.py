@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Union
+from typing import Any, Dict
 
 from deputydev_core.utils.app_logger import AppLogger
 
@@ -31,7 +31,7 @@ class PayloadProcessor:
             raise ValueError(f"Failed to decode JSON payload from S3: {e}")
 
         # Preserve important fields from original payload
-        for field in ("session_id", "session_type", "auth_token"):
+        for field in ("session_id", "session_type", "auth_token", "user_team_id"):
             if field in payload_dict:
                 s3_payload[field] = payload_dict[field]
 
@@ -60,38 +60,13 @@ class PayloadProcessor:
                 session_data_dict["llm_model"] = payload.llm_model.value
             await CodeGenTasksCache.set_session_data(payload.session_id, session_data_dict)
 
-    def is_s3_payload(self, payload_dict: Dict[str, Any]) -> bool:
-        """
-        Check if the payload is from S3 (has attachment_id).
 
-        Args:
-            payload_dict: Raw payload dictionary
+    async def get_payload_from_raw_data(self, raw_data: Dict[str, Any]) -> QuerySolverInput | QuerySolverResumeInput:
+        final_raw_payload = raw_data.copy()
+        if raw_data.get("type") == "PAYLOAD_ATTACHMENT" and raw_data.get("attachment_id") is not None:
+            # S3 attachment payload
+            final_raw_payload = await self.process_s3_payload(raw_data)
 
-        Returns:
-            bool: True if this is an S3 payload, False otherwise
-        """
-        return payload_dict.get("type") == "PAYLOAD_ATTACHMENT" and payload_dict.get("attachment_id") is not None
-
-    def is_resume_payload(self, payload: Union[QuerySolverInput, QuerySolverResumeInput]) -> bool:
-        """
-        Check if the payload is for resuming a stream.
-
-        Args:
-            payload: QuerySolverInput or QuerySolverResumeInput to check
-
-        Returns:
-            bool: True if this is a resume payload, False otherwise
-        """
-        return isinstance(payload, QuerySolverResumeInput)
-
-    def is_normal_payload(self, payload: Union[QuerySolverInput, QuerySolverResumeInput]) -> bool:
-        """
-        Check if the payload is a normal query payload.
-
-        Args:
-            payload: QuerySolverInput or QuerySolverResumeInput to check
-
-        Returns:
-            bool: True if this is a normal payload, False otherwise
-        """
-        return isinstance(payload, QuerySolverInput) and not isinstance(payload, QuerySolverResumeInput)
+        if final_raw_payload.get("resume_query_id") is not None:
+            return QuerySolverResumeInput.model_validate(final_raw_payload)
+        return QuerySolverInput.model_validate(final_raw_payload)

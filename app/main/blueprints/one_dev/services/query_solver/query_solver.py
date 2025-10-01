@@ -60,25 +60,32 @@ class QuerySolver:
             await ws.send(json.dumps(start_data))
 
             # Handle different payload types
-            if self.payload_processor.is_resume_payload(payload):
+            if  isinstance(payload, QuerySolverResumeInput):
                 # Resume case: get existing query_id and start from offset
                 query_id = await self.start_query_solver(
                     payload=payload, client_data=client_data, task_checker=task_checker
                 )
                 # Get stream from specific offset if provided
                 offset_id = payload.resume_offset_id or "0"
-                stream_iterator = await self.get_stream(query_id, offset_id=offset_id)
+                stream_iterator = StreamHandler.stream_from(stream_id=query_id, offset_id=offset_id)
             else:
                 # Normal case: start new query processing
                 query_id = await self.start_query_solver(
                     payload=payload, client_data=client_data, task_checker=task_checker
                 )
-                stream_iterator = await self.get_stream(query_id)
+                stream_iterator = StreamHandler.stream_from(stream_id=query_id, offset_id="0")
 
             # Stream events to client
-            async for data_block in stream_iterator:
+            curr = 0
+            async for data_block in stream_iterator():
+                curr += 1
                 event_data = data_block.model_dump(mode="json")
+                print("Sending to WebSocket:", event_data)
                 await ws.send(json.dumps(event_data))
+
+                if curr > 4:
+                    await ws.close()
+                    break
 
                 # Handle session cleanup for specific events
                 if event_data.get("type") == "QUERY_COMPLETE":
@@ -113,7 +120,7 @@ class QuerySolver:
         Returns the query_id which is used as stream_id for getting the stream.
         """
         # Check if this is a resume payload
-        if self.payload_processor.is_resume_payload(payload):
+        if  isinstance(payload, QuerySolverResumeInput):
             return await self.resume_stream(payload)
 
         # Normal payload - generate new query_id and start processing
@@ -130,13 +137,6 @@ class QuerySolver:
         )
 
         return query_id
-
-    async def get_stream(self, query_id: str, offset_id: str = "0") -> AsyncIterator[BaseModel]:
-        """
-        Get the stream iterator from Redis stream using query_id as stream_id.
-        """
-        async for event in StreamHandler.stream_from(stream_id=query_id, offset_id=offset_id):
-            yield event
 
     async def resume_stream(
         self,

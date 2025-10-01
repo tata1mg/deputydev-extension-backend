@@ -212,7 +212,7 @@ class TerminalCommandEditInput(BaseModel):
 
 
 class ResponseMetadataContent(BaseModel):
-    query_id: int
+    query_id: str
     session_id: int
 
 

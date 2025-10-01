@@ -236,7 +236,7 @@ class StreamProcessor:
                 raise ValueError("Expected StreamingParsedLLMCallResponse")
 
             yield ResponseMetadataBlock(
-                content=ResponseMetadataContent(query_id=llm_response.query_id, session_id=session_id),
+                content=ResponseMetadataContent(query_id=query_id, session_id=session_id),
                 type="RESPONSE_METADATA",
             )
 

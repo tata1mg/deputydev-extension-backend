@@ -1,6 +1,6 @@
 import asyncio
 from datetime import datetime
-from typing import Any, AsyncIterator, Callable, Dict, List, Optional, Tuple
+from typing import Any, AsyncIterator, Awaitable, Callable, Dict, List, Optional, Tuple
 
 import redis.asyncio as redis
 from pydantic import BaseModel
@@ -44,6 +44,7 @@ class StreamHandler(BaseServiceCache):
         Returns:
             str: The message ID that was assigned to the message
         """
+        print("Pushing to stream:", stream_id, "Data:", data)
         stream_key = cls._get_stream_key(stream_id)
 
         # Serialize BaseModel to JSON string for Redis storage
@@ -80,9 +81,12 @@ class StreamHandler(BaseServiceCache):
         Returns:
             Callable[[], AsyncIterator[BaseModel]]: A function that returns an async iterator
         """
+        print("Getting from stream:", stream_id, "Offset ID:", offset_id)
 
         async def stream_iterator() -> AsyncIterator[BaseModel]:
             """Async iterator function that yields BaseModel messages from the stream."""
+
+            print("Starting stream iterator for:", stream_id, "from offset:", offset_id)
             stream_key = cls._get_stream_key(stream_id)
             current_offset = offset_id
 
@@ -98,6 +102,7 @@ class StreamHandler(BaseServiceCache):
 
                     # Parse and yield the BaseModel message
                     message_data: BaseModel = cls._parse_stream_message(message_id, fields, model_class)
+                    print("Yielding existing message:", message_data)
                     yield message_data
 
             # Now start blocking reads for new messages
@@ -108,13 +113,15 @@ class StreamHandler(BaseServiceCache):
                 try:
                     # Check if stream still exists and hasn't expired
                     stream_exists: bool = await cls._stream_exists(stream_key)
+                    print("Stream exists check for", stream_key, ":", stream_exists)
                     if not stream_exists:
-                        break
+                        continue
 
                     # Blocking read for new messages
                     new_messages: List[Tuple[str, List[Tuple[str, Dict[str, str]]]]] = await cls._redis_xread(
                         {stream_key: next_offset}, count=count, block=block_timeout
                     )
+                    print("New messages read from stream:", new_messages)
 
                     if not new_messages:
                         # Timeout occurred, continue to next iteration
@@ -127,6 +134,7 @@ class StreamHandler(BaseServiceCache):
 
                             # Parse and yield the BaseModel message
                             message_data: BaseModel = cls._parse_stream_message(message_id, fields, model_class)
+                            print("Yielding new message:", message_data)
                             yield message_data
 
                 except asyncio.CancelledError:
@@ -140,14 +148,14 @@ class StreamHandler(BaseServiceCache):
         return stream_iterator
 
     @classmethod
-    async def stream_from(
+    def stream_from(
         cls,
         stream_id: str,
         offset_id: str = "0",
         count: Optional[int] = None,
         block_timeout: Optional[int] = 1000,
         model_class: Optional[type] = None,
-    ) -> AsyncIterator[BaseModel]:
+    ) -> Callable[[], AsyncIterator[BaseModel]]:
         """
         Convenience method to directly get an async iterator from a stream.
         This is equivalent to calling get_from_stream(...) and then calling the returned function.
@@ -162,9 +170,7 @@ class StreamHandler(BaseServiceCache):
         Returns:
             AsyncIterator[BaseModel]: An async iterator that yields BaseModel messages
         """
-        iterator_func = cls.get_from_stream(stream_id, offset_id, count, block_timeout, model_class)
-        async for message in iterator_func():
-            yield message
+        return cls.get_from_stream(stream_id, offset_id, count, block_timeout, model_class)
 
     @classmethod
     async def _redis_xadd(cls, stream_key: str, data: Dict[str, str], message_id: str = "*") -> str:

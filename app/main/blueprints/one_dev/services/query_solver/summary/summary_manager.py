@@ -1,5 +1,5 @@
 import asyncio
-from typing import List, Optional, tuple
+from typing import List, Optional, Tuple
 
 from deputydev_core.llm_handler.core.handler import LLMHandler
 from deputydev_core.llm_handler.dataclasses.main import NonStreamingParsedLLMCallResponse
@@ -125,7 +125,7 @@ class SummaryManager:
         session_id: int,
         query_id: str,
         llm_handler: LLMHandler[PromptFeatures],
-    ) -> tuple[Optional[str], bool]:  # Always return a tuple
+    ) -> Tuple[Optional[str], bool]:  # Always return a Tuple
         """Generate query summary using LLM."""
         all_messages = await AgentChatsRepository.get_chats_by_session_id(session_id=session_id)
         # filter messages to be from current query only

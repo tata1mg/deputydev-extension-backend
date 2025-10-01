@@ -120,7 +120,7 @@ async def cancel_chat(
 @authenticate
 @ensure_session_id(auto_create=True)
 async def solve_user_query_ws(
-    _request: Request, ws: WebsocketImplProtocol, client_data: ClientData, auth_data: AuthData, session_id: int
+    _request: Request, ws: WebsocketImplProtocol, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
 ) -> None:
     # TODO: Remove after MessageSession deprecation
     session_type: str = _request.headers.get("X-Session-Type")
@@ -135,21 +135,21 @@ async def solve_user_query_ws(
 
         while True:
             payload_dict = await ws.recv()
+            if not payload_dict:
+                continue
+
+            # add session_id and session_type to payload_dict
             payload_dict = json.loads(payload_dict)
             payload_dict["session_id"] = session_id
             payload_dict["session_type"] = session_type
+            payload_dict["user_team_id"] = auth_data.user_team_id
 
-            # Case 1: S3 payload (has attachment_id)
-            if query_solver._is_s3_payload(payload_dict):
-                payload_dict = await query_solver.process_s3_payload(payload_dict)
 
-            # Case 2: Resume payload - check if it has resume_query_id
-            if payload_dict.get("resume_query_id"):
-                payload = QuerySolverResumeInput(**payload_dict, user_team_id=auth_data.user_team_id)
-            else:
-                # Case 3: Normal payload
-                payload = QuerySolverInput(**payload_dict, user_team_id=auth_data.user_team_id)
-                # Handle session data caching (skip for resume payloads)
+            # Validate and parse payload
+            payload = await query_solver.payload_processor.get_payload_from_raw_data(payload_dict)
+
+            # Handle session data caching
+            if isinstance(payload, QuerySolverInput):
                 await query_solver.handle_session_data_caching(payload)
 
             # Execute query processing
