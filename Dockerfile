@@ -11,10 +11,13 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-RUN echo "$SSH_PRIVATE_KEY" > /root/.ssh/id_ed25519 && \
+# Create SSH directory and set up keys
+RUN mkdir -p /root/.ssh && \
+    echo "$SSH_PRIVATE_KEY" > /root/.ssh/id_ed25519 && \
     echo "$SSH_PUBLIC_KEY" > /root/.ssh/id_ed25519.pub && \
     chmod 600 /root/.ssh/id_ed25519 && \
-    chmod 600 /root/.ssh/id_ed25519.pub
+    chmod 600 /root/.ssh/id_ed25519.pub && \
+    chmod 700 /root/.ssh
 
 # System deps for installs and diagnostics
 RUN apt-get update && apt-get install -y --no-install-recommends \
