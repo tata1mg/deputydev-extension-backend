@@ -1,31 +1,37 @@
 ARG SERVICE_NAME
-ARG SSH_PRIVATE_KEY
-ARG SSH_PUBLIC_KEY
 ARG USE_CONFIG_FROM_ROOT=false
 
 # ---------------- Builder Stage ----------------
 FROM python:3.11-slim AS builder
+
+# Re-declare build args for this stage
+ARG SSH_PRIVATE_KEY
+ARG SSH_PUBLIC_KEY
 
 # Environment for reproducible, quiet Python
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-# Create SSH directory and set up keys
-RUN mkdir -p /root/.ssh && \
-    echo "$SSH_PRIVATE_KEY" > /root/.ssh/id_ed25519 && \
-    echo "$SSH_PUBLIC_KEY" > /root/.ssh/id_ed25519.pub && \
-    chmod 600 /root/.ssh/id_ed25519 && \
-    chmod 600 /root/.ssh/id_ed25519.pub && \
-    chmod 700 /root/.ssh
-
 # System deps for installs and diagnostics
 RUN apt-get update && apt-get install -y --no-install-recommends \
       git \
       curl \
       build-essential \
-      openssh-server \
+      openssh-client \
     && rm -rf /var/lib/apt/lists/*
+
+# Create SSH keys from build args with proper formatting
+RUN echo -e "$SSH_PRIVATE_KEY" > /root/.ssh/id_ed25519 && \
+    echo -e "$SSH_PUBLIC_KEY" > /root/.ssh/id_ed25519.pub && \
+    chmod 600 /root/.ssh/id_ed25519 && \
+    chmod 644 /root/.ssh/id_ed25519.pub && \
+    chown root:root /root/.ssh/id_ed25519 /root/.ssh/id_ed25519.pub
+
+# Set up SSH for git access to private repositories
+RUN mkdir -p /root/.ssh && \
+    chmod 700 /root/.ssh && \
+    ssh-keyscan github.com >> /root/.ssh/known_hosts
 
 # Install uv for fast, reproducible installs
 RUN pip install uv
