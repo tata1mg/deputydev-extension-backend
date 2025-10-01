@@ -1,9 +1,11 @@
 import asyncio
 import json
-from typing import Any, AsyncIterator, Dict, List, Optional
+from typing import Any, AsyncIterator, Dict, List, Optional, Union
 from uuid import uuid4
 
 from deputydev_core.llm_handler.core.handler import LLMHandler
+from deputydev_core.utils.app_logger import AppLogger
+from sanic.server.websockets.impl import WebsocketImplProtocol
 from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
     ParsedLLMCallResponse,
@@ -37,15 +39,18 @@ from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.config_manager import ConfigManager
 from pydantic import BaseModel
 
+from app.backend_common.caches.code_gen_tasks_cache import CodeGenTasksCache
 from app.backend_common.models.dto.extension_sessions_dto import ExtensionSessionData
+from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
 from app.backend_common.repository.extension_sessions.repository import (
-    ExtensionSessionsRepository,
+    ExtensionSessionRepository,
 )
 from app.backend_common.repository.message_threads.repository import (
-    MessageThreadsRepository,
+    MessageThreadRepository,
 )
+from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload
 from app.backend_common.services.llm.llm_service_manager import LLMServiceManager
-from app.backend_common.utils.dataclasses.main import ClientData
+from app.backend_common.utils.dataclasses.main import AuthData, ClientData
 from app.backend_common.utils.tool_response_parser import LLMResponseFormatter
 from app.main.blueprints.one_dev.constants.tools import ToolStatus
 from app.main.blueprints.one_dev.models.dto.agent_chats import (
@@ -101,6 +106,113 @@ from .stream_handler.stream_handler import StreamHandler
 
 
 class QuerySolver:
+    @staticmethod
+    async def start_pinger(ws: WebsocketImplProtocol, interval: int = 25) -> None:
+        """Start a background pinger task to keep WebSocket connection alive."""
+        try:
+            while True:
+                await asyncio.sleep(interval)
+                try:
+                    await ws.send(json.dumps({"type": "PING"}))
+                except Exception:  # noqa: BLE001
+                    break  # stop pinging if connection breaks
+        except asyncio.CancelledError:
+            pass
+
+    @staticmethod
+    async def process_s3_payload(payload_dict: Dict[str, Any]) -> Dict[str, Any]:
+        """Process S3 attachment payload and return the processed payload."""
+        attachment_id = payload_dict["attachment_id"]
+        attachment_data = await ChatAttachmentsRepository.get_attachment_by_id(attachment_id=attachment_id)
+        if not attachment_data or getattr(attachment_data, "status", None) == "deleted":
+            raise ValueError(f"Attachment with ID {attachment_id} not found or already deleted.")
+        
+        s3_key = attachment_data.s3_key
+        try:
+            object_bytes = await ChatFileUpload.get_file_data_by_s3_key(s3_key=s3_key)
+            s3_payload = json.loads(object_bytes.decode("utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError) as e:
+            raise ValueError(f"Failed to decode JSON payload from S3: {e}")
+        
+        # Preserve important fields from original payload
+        for field in ("session_id", "session_type", "auth_token"):
+            if field in payload_dict:
+                s3_payload[field] = payload_dict[field]
+        
+        # Cleanup S3 resources
+        try:
+            await ChatFileUpload.delete_file_by_s3_key(s3_key=s3_key)
+        except Exception:  # noqa: BLE001
+            AppLogger.log_error(f"Failed to delete S3 file {s3_key}")
+        
+        try:
+            await ChatAttachmentsRepository.update_attachment_status(attachment_id, "deleted")
+        except Exception:  # noqa: BLE001
+            AppLogger.log_error(f"Failed to update status for attachment {attachment_id}")
+        
+        return s3_payload
+
+    @staticmethod
+    async def handle_session_data_caching(payload: QuerySolverInput) -> None:
+        """Handle session data caching for the payload."""
+        await CodeGenTasksCache.cleanup_session_data(payload.session_id)
+        
+        session_data_dict = {}
+        if payload.query:
+            session_data_dict["query"] = payload.query
+            if payload.llm_model:
+                session_data_dict["llm_model"] = payload.llm_model.value
+            await CodeGenTasksCache.set_session_data(payload.session_id, session_data_dict)
+
+    async def execute_query_processing(
+        self,
+        payload: Union[QuerySolverInput, QuerySolverResumeInput],
+        client_data: ClientData,
+        auth_data: AuthData,
+        ws: WebsocketImplProtocol,
+    ) -> None:
+        """Execute the query processing and stream results."""
+        task_checker = CancellationChecker(payload.session_id)
+        try:
+            await task_checker.start_monitoring()
+            
+            # Send stream start notification
+            start_data = {"type": "STREAM_START"}
+            if auth_data.session_refresh_token:
+                start_data["new_session_data"] = auth_data.session_refresh_token
+            await ws.send(json.dumps(start_data))
+
+            # Handle different payload types
+            if self._is_resume_payload(payload):
+                # Resume case: get existing query_id and start from offset
+                query_id = await self.start_query_solver(
+                    payload=payload, client_data=client_data, task_checker=task_checker
+                )
+                # Get stream from specific offset if provided
+                offset_id = payload.resume_offset_id or "0"
+                stream_iterator = await self.get_stream(query_id, offset_id=offset_id)
+            else:
+                # Normal case: start new query processing
+                query_id = await self.start_query_solver(
+                    payload=payload, client_data=client_data, task_checker=task_checker
+                )
+                stream_iterator = await self.get_stream(query_id)
+
+            # Stream events to client
+            async for data_block in stream_iterator:
+                event_data = data_block.model_dump(mode="json")
+                await ws.send(json.dumps(event_data))
+
+                # Handle session cleanup for specific events
+                if event_data.get("type") == "QUERY_COMPLETE":
+                    await CodeGenTasksCache.cleanup_session_data(payload.session_id)
+
+        except Exception as ex:  # noqa: BLE001
+            AppLogger.log_error(f"Error in WebSocket solve_query: {ex}")
+            await ws.send(json.dumps({"type": "STREAM_ERROR", "message": f"WebSocket error: {str(ex)}"}))
+        finally:
+            await task_checker.stop_monitoring()
+
     async def _generate_session_summary(
         self,
         session_id: int,
@@ -1006,6 +1118,11 @@ class QuerySolver:
         Returns:
             str: The query_id (used as stream_id) to retrieve the stream
         """
+        # Check if this is a resume payload
+        if self._is_resume_payload(payload):
+            return await self.resume_stream(payload)
+
+        # Normal payload - generate new query_id and start processing
         query_id = uuid4().hex
 
         # Start the query solving process in background
@@ -1020,18 +1137,79 @@ class QuerySolver:
 
         return query_id
 
-    async def get_stream(self, query_id: str) -> AsyncIterator[BaseModel]:
+    async def get_stream(self, query_id: str, offset_id: str = "0") -> AsyncIterator[BaseModel]:
         """
         Get the stream iterator from Redis stream using query_id as stream_id.
 
         Args:
             query_id: The query ID (used as stream_id) to retrieve the stream
+            offset_id: The offset ID to start reading from (defaults to "0")
 
         Returns:
             AsyncIterator[BaseModel]: Async iterator for stream events
         """
-        async for event in StreamHandler.stream_from(stream_id=query_id):
+        async for event in StreamHandler.stream_from(stream_id=query_id, offset_id=offset_id):
             yield event
+
+
+    async def resume_stream(
+        self,
+        payload: QuerySolverInput,
+    ) -> str:
+        """
+        Resume an existing stream from a given checkpoint ID and query_id.
+        This will continue streaming from the specified offset without running the query solver again.
+
+        Args:
+            payload: QuerySolverInput containing the resume_query_id and resume_offset_id
+
+        Returns:
+            str: The same query_id that was being resumed
+
+        Raises:
+            ValueError: If resume_query_id is not provided
+        """
+        if not payload.resume_query_id:
+            raise ValueError("resume_query_id is required for resuming a stream")
+
+        # Return the same query_id for stream continuation
+        return payload.resume_query_id
+
+    def _is_s3_payload(self, payload_dict: Dict[str, Any]) -> bool:
+        """
+        Check if the payload is from S3 (has attachment_id).
+
+        Args:
+            payload_dict: Raw payload dictionary
+
+        Returns:
+            bool: True if this is an S3 payload, False otherwise
+        """
+        return payload_dict.get("type") == "PAYLOAD_ATTACHMENT" and payload_dict.get("attachment_id") is not None
+
+    def _is_resume_payload(self, payload: Union[QuerySolverInput, QuerySolverResumeInput]) -> bool:
+        """
+        Check if the payload is for resuming a stream.
+
+        Args:
+            payload: QuerySolverInput or QuerySolverResumeInput to check
+
+        Returns:
+            bool: True if this is a resume payload, False otherwise
+        """
+        return isinstance(payload, QuerySolverResumeInput)
+
+    def _is_normal_payload(self, payload: Union[QuerySolverInput, QuerySolverResumeInput]) -> bool:
+        """
+        Check if the payload is a normal query payload.
+
+        Args:
+            payload: QuerySolverInput or QuerySolverResumeInput to check
+
+        Returns:
+            bool: True if this is a normal payload, False otherwise
+        """
+        return isinstance(payload, QuerySolverInput) and not isinstance(payload, QuerySolverResumeInput)
 
     async def _solve_query_with_streaming(
         self,

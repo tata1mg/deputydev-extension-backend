@@ -7,11 +7,7 @@ from deputydev_core.utils.config_manager import ConfigManager
 from sanic import Blueprint, response
 from sanic.server.websockets.impl import WebsocketImplProtocol
 
-from app.backend_common.caches.code_gen_tasks_cache import (
-    CodeGenTasksCache,
-)
-from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
-from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload
+from app.backend_common.caches.code_gen_tasks_cache import CodeGenTasksCache
 from app.backend_common.utils.authenticate import authenticate
 from app.backend_common.utils.dataclasses.main import AuthData, ClientData
 from app.backend_common.utils.sanic_wrapper import Request, send_response
@@ -19,6 +15,7 @@ from app.backend_common.utils.sanic_wrapper.types import ResponseDict
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     InlineEditInput,
     QuerySolverInput,
+    QuerySolverResumeInput,
     TerminalCommandEditInput,
     UserQueryEnhancerInput,
 )
@@ -32,7 +29,6 @@ from app.main.blueprints.one_dev.services.query_solver.terminal_command_editor i
 from app.main.blueprints.one_dev.services.query_solver.user_query_enhancer import (
     UserQueryEnhancer,
 )
-from app.main.blueprints.one_dev.utils.cancellation_checker import CancellationChecker
 from app.main.blueprints.one_dev.utils.client.client_validator import (
     validate_client_version,
 )
@@ -130,94 +126,38 @@ async def solve_user_query_ws(_request: Request, ws: WebsocketImplProtocol, **kw
     session_id: int = kwargs.get("session_id")
     session_type: str = _request.headers.get("X-Session-Type")
 
-    async def start_pinger(interval: int = 25) -> None:
-        try:
-            while True:
-                await asyncio.sleep(interval)
-                try:
-                    await ws.send(json.dumps({"type": "PING"}))
-                except Exception:  # noqa: BLE001
-                    break  # stop pinging if connection breaks
-        except asyncio.CancelledError:
-            pass
+    # Initialize query solver
+    query_solver = QuerySolver()
 
     # Start a background task to send pings every 25 seconds
     pinger_task = None
     try:
-        pinger_task = asyncio.create_task(start_pinger())
+        pinger_task = asyncio.create_task(query_solver.start_pinger(ws))
+        
         while True:
             payload_dict = await ws.recv()
             payload_dict = json.loads(payload_dict)
             payload_dict["session_id"] = session_id
             payload_dict["session_type"] = session_type
 
-            if payload_dict.get("type") == "PAYLOAD_ATTACHMENT" and payload_dict.get("attachment_id"):
-                attachment_id = payload_dict["attachment_id"]
-                attachment_data = await ChatAttachmentsRepository.get_attachment_by_id(attachment_id=attachment_id)
-                if not attachment_data or getattr(attachment_data, "status", None) == "deleted":
-                    raise ValueError(f"Attachment with ID {attachment_id} not found or already deleted.")
-                s3_key = attachment_data.s3_key
-                try:
-                    object_bytes = await ChatFileUpload.get_file_data_by_s3_key(s3_key=s3_key)
-                    s3_payload = json.loads(object_bytes.decode("utf-8"))
-                except (json.JSONDecodeError, UnicodeDecodeError) as e:
-                    raise ValueError(f"Failed to decode JSON payload from S3: {e}")
-                for field in ("session_id", "session_type", "auth_token"):
-                    if field in payload_dict:
-                        s3_payload[field] = payload_dict[field]
-                payload_dict = s3_payload
-                try:
-                    await ChatFileUpload.delete_file_by_s3_key(s3_key=s3_key)
-                except Exception:  # noqa: BLE001
-                    AppLogger.log_error(f"Failed to delete S3 file {s3_key}")
-                try:
-                    await ChatAttachmentsRepository.update_attachment_status(attachment_id, "deleted")
-                except Exception:  # noqa: BLE001
-                    AppLogger.log_error(f"Failed to update status for attachment {attachment_id}")
-            payload = QuerySolverInput(**payload_dict, user_team_id=auth_data.user_team_id)
+            # Case 1: S3 payload (has attachment_id)
+            if query_solver._is_s3_payload(payload_dict):
+                payload_dict = await query_solver.process_s3_payload(payload_dict)
+            
+            # Case 2: Resume payload - check if it has resume_query_id
+            if payload_dict.get("resume_query_id"):
+                payload = QuerySolverResumeInput(**payload_dict, user_team_id=auth_data.user_team_id)
+            else:
+                # Case 3: Normal payload
+                payload = QuerySolverInput(**payload_dict, user_team_id=auth_data.user_team_id)
+                # Handle session data caching (skip for resume payloads)
+                await query_solver.handle_session_data_caching(payload)
 
-            await CodeGenTasksCache.cleanup_session_data(payload.session_id)
-
-            session_data_dict = {}
-            if payload.query:
-                session_data_dict["query"] = payload.query
-                if payload.llm_model:
-                    session_data_dict["llm_model"] = payload.llm_model.value
-                await CodeGenTasksCache.set_session_data(payload.session_id, session_data_dict)
-
-            async def solve_query() -> None:  # noqa: C901
-                task_checker = CancellationChecker(payload.session_id)
-                try:
-                    await task_checker.start_monitoring()
-                    start_data = {"type": "STREAM_START"}
-                    if auth_data.session_refresh_token:
-                        start_data["new_session_data"] = auth_data.session_refresh_token
-                    await ws.send(json.dumps(start_data))
-
-                    # Start the query solver and get the stream_id (query_id)
-                    query_solver = QuerySolver()
-                    query_id = await query_solver.start_query_solver(
-                        payload=payload, client_data=client_data, task_checker=task_checker
-                    )
-
-                    # Get the stream iterator from Redis
-                    stream_iterator = await query_solver.get_stream(query_id)
-
-                    async for data_block in stream_iterator:
-                        event_data = data_block.model_dump(mode="json")
-                        await ws.send(json.dumps(event_data))
-
-                        # Handle session cleanup for specific events
-                        if event_data.get("type") == "QUERY_COMPLETE":
-                            await CodeGenTasksCache.cleanup_session_data(payload.session_id)
-
-                except Exception as ex:  # noqa: BLE001
-                    AppLogger.log_error(f"Error in WebSocket solve_query: {ex}")
-                    await ws.send(json.dumps({"type": "STREAM_ERROR", "message": f"WebSocket error: {str(ex)}"}))
-                finally:
-                    await task_checker.stop_monitoring()
-
-            _main_task = asyncio.create_task(solve_query())
+            # Execute query processing
+            _main_task = asyncio.create_task(
+                query_solver.execute_query_processing(payload, client_data, auth_data, ws)
+            )
+            
     except Exception as error:
         if pinger_task:
             pinger_task.cancel()

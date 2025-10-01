@@ -169,6 +169,14 @@ class QuerySolverInput(BaseModel):
         return v
 
 
+class QuerySolverResumeInput(BaseModel):
+    session_id: int
+    user_team_id: int
+    session_type: str
+    resume_query_id: str
+    resume_offset_id: Optional[str] = None
+
+
 class CodeSelectionInput(BaseModel):
     selected_text: str
     file_path: str
