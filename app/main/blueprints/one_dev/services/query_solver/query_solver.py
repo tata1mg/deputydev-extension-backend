@@ -97,6 +97,7 @@ from app.main.blueprints.one_dev.utils.cancellation_checker import (
 
 from .agent_selector.agent_selector import QuerySolverAgentSelector
 from .prompts.factory import PromptFeatureFactory
+from .stream_handler.stream_handler import StreamHandler
 
 
 class QuerySolver:
@@ -138,7 +139,6 @@ class QuerySolver:
         generated_summary = llm_response.parsed_content[0].get("summary")
         await ExtensionSessionsRepository.update_session_summary(session_id=session_id, summary=generated_summary)
 
-
     def _format_tool_response(
         self, tool_response: ToolUseResponseInput, vscode_env: Optional[str], focus_items: Optional[List[FocusItem]]
     ) -> Dict[str, Any]:
@@ -171,7 +171,6 @@ class QuerySolver:
             return json_response
 
         return tool_response.response if tool_response.response else {}
-
 
     async def _store_tool_response_in_chat_chain(
         self,
@@ -793,8 +792,6 @@ class QuerySolver:
                 ),
             )
 
-
-
     async def solve_query(
         self,
         payload: QuerySolverInput,
@@ -990,3 +987,261 @@ class QuerySolver:
 
         else:
             raise ValueError("Invalid input")
+
+    async def start_query_solver(
+        self,
+        payload: QuerySolverInput,
+        client_data: ClientData,
+        task_checker: Optional[CancellationChecker] = None,
+    ) -> str:
+        """
+        Wrapper function that starts the query solver and handles streaming part.
+        Returns the query_id which is used as stream_id for getting the stream.
+
+        Args:
+            payload: QuerySolverInput containing the query and parameters
+            client_data: Client data for the request
+            task_checker: Optional cancellation checker
+
+        Returns:
+            str: The query_id (used as stream_id) to retrieve the stream
+        """
+        query_id = uuid4().hex
+
+        # Start the query solving process in background
+        asyncio.create_task(
+            self._solve_query_with_streaming(
+                payload=payload,
+                client_data=client_data,
+                query_id=query_id,
+                task_checker=task_checker,
+            )
+        )
+
+        return query_id
+
+    async def get_stream(self, query_id: str) -> AsyncIterator[BaseModel]:
+        """
+        Get the stream iterator from Redis stream using query_id as stream_id.
+
+        Args:
+            query_id: The query ID (used as stream_id) to retrieve the stream
+
+        Returns:
+            AsyncIterator[BaseModel]: Async iterator for stream events
+        """
+        async for event in StreamHandler.stream_from(stream_id=query_id):
+            yield event
+
+    async def _solve_query_with_streaming(
+        self,
+        payload: QuerySolverInput,
+        client_data: ClientData,
+        query_id: str,
+        task_checker: Optional[CancellationChecker] = None,
+    ) -> None:
+        """
+        Internal method that handles the actual query solving with error handling
+        and streams results to Redis.
+
+        Args:
+            payload: QuerySolverInput containing the query and parameters
+            client_data: Client data for the request
+            query_id: The query ID to use as stream_id
+            task_checker: Optional cancellation checker
+        """
+        from deputydev_core.exceptions.exceptions import InputTokenLimitExceededError
+        from deputydev_core.exceptions.llm_exceptions import LLMThrottledError
+
+        try:
+            # Get the stream iterator from the existing solve_query method
+            stream_iterator = await self.solve_query(
+                payload=payload,
+                client_data=client_data,
+                save_to_redis=True,
+                task_checker=task_checker,
+            )
+
+            # Stream all events to Redis using StreamHandler
+            last_event = None
+            async for event in stream_iterator:
+                last_event = event
+                await StreamHandler.push_to_stream(stream_id=query_id, data=event)
+
+            # Push completion events
+            if (
+                last_event
+                and hasattr(last_event, "type")
+                and last_event.type != StreamingEventType.TOOL_USE_REQUEST_END
+            ):
+                completion_event = self._create_completion_event()
+                await StreamHandler.push_to_stream(stream_id=query_id, data=completion_event)
+
+                close_event = self._create_close_event()
+                await StreamHandler.push_to_stream(stream_id=query_id, data=close_event)
+            else:
+                end_event = self._create_end_event()
+                await StreamHandler.push_to_stream(stream_id=query_id, data=end_event)
+
+        except LLMThrottledError as ex:
+            AppLogger.log_error(f"LLM throttled error in query solver: {ex}")
+            error_event = self._create_llm_throttled_error_event(ex)
+            await StreamHandler.push_to_stream(stream_id=query_id, data=error_event)
+
+        except InputTokenLimitExceededError as ex:
+            AppLogger.log_error(
+                f"Input token limit exceeded: model={ex.model_name}, tokens={ex.current_tokens}/{ex.max_tokens}"
+            )
+            error_event = await self._create_token_limit_error_event(ex, payload.query)
+            await StreamHandler.push_to_stream(stream_id=query_id, data=error_event)
+
+        except asyncio.CancelledError as ex:
+            AppLogger.log_error(f"Query cancelled: {ex}")
+            error_event = self._create_error_event(f"LLM processing error: {str(ex)}")
+            await StreamHandler.push_to_stream(stream_id=query_id, data=error_event)
+
+        except Exception as e:
+            # Handle other errors by pushing error event to stream
+            AppLogger.log_error(f"Error in query solver: {e}")
+            error_event = self._create_error_event(f"LLM processing error: {str(e)}")
+            await StreamHandler.push_to_stream(stream_id=query_id, data=error_event)
+
+    def _create_error_event(self, error_message: str) -> BaseModel:
+        """
+        Create an error event BaseModel for streaming.
+
+        Args:
+            error_message: The error message to include
+
+        Returns:
+            BaseModel: Error event model
+        """
+
+        class StreamErrorEvent(BaseModel):
+            type: str = "STREAM_ERROR"
+            message: str
+
+        return StreamErrorEvent(message=error_message)
+
+    def _create_llm_throttled_error_event(self, ex) -> BaseModel:
+        """
+        Create a throttled error event BaseModel for streaming.
+
+        Args:
+            ex: LLMThrottledError exception
+
+        Returns:
+            BaseModel: Throttled error event model
+        """
+
+        class LLMThrottledErrorEvent(BaseModel):
+            type: str = "STREAM_ERROR"
+            status: str = "LLM_THROTTLED"
+            provider: Optional[str] = None
+            model: Optional[str] = None
+            retry_after: Optional[int] = None
+            message: str = "This chat is currently being throttled. You can wait, or switch to a different model."
+            detail: Optional[str] = None
+            region: Optional[str] = None
+
+        return LLMThrottledErrorEvent(
+            provider=getattr(ex, "provider", None),
+            model=getattr(ex, "model", None),
+            retry_after=ex.retry_after,
+            detail=ex.detail,
+            region=getattr(ex, "region", None),
+        )
+
+    async def _create_token_limit_error_event(self, ex, query: str) -> BaseModel:
+        """
+        Create a token limit exceeded error event BaseModel for streaming.
+
+        Args:
+            ex: InputTokenLimitExceededError exception
+            query: The original query
+
+        Returns:
+            BaseModel: Token limit error event model
+        """
+        from typing import Any, Dict, List
+
+        # Get available models with higher token limits
+        better_models: List[Dict[str, Any]] = []
+
+        try:
+            code_gen_models = ConfigManager.configs.get("CODE_GEN_LLM_MODELS", [])
+            llm_models_config = ConfigManager.configs.get("LLM_MODELS", {})
+            current_model_limit = ex.max_tokens
+
+            for model in code_gen_models:
+                model_name = model.get("name")
+                if model_name and model_name != ex.model_name and model_name in llm_models_config:
+                    model_config = llm_models_config[model_name]
+                    model_token_limit = model_config.get("INPUT_TOKENS_LIMIT", 100000)
+
+                    if model_token_limit > current_model_limit:
+                        enhanced_model = model.copy()
+                        enhanced_model["input_token_limit"] = model_token_limit
+                        better_models.append(enhanced_model)
+
+            # Sort by token limit (highest first)
+            better_models.sort(key=lambda m: m.get("input_token_limit", 0), reverse=True)
+
+        except Exception as model_error:
+            AppLogger.log_error(f"Error fetching better models: {model_error}")
+
+        def get_model_display_name(model_name: str) -> str:
+            """Get the display name for a model from the configuration."""
+            try:
+                chat_models = ConfigManager.configs.get("CODE_GEN_LLM_MODELS", [])
+                for model in chat_models:
+                    if model.get("name") == model_name:
+                        return model.get("display_name", model_name)
+                return model_name
+            except Exception:
+                return model_name
+
+        class TokenLimitErrorEvent(BaseModel):
+            type: str = "STREAM_ERROR"
+            status: str = "INPUT_TOKEN_LIMIT_EXCEEDED"
+            model: str
+            current_tokens: int
+            max_tokens: int
+            query: str
+            message: str
+            detail: Optional[str]
+            better_models: List[Dict[str, Any]]
+
+        return TokenLimitErrorEvent(
+            model=ex.model_name,
+            current_tokens=ex.current_tokens,
+            max_tokens=ex.max_tokens,
+            query=query,
+            message=f"Your message exceeds the context window supported by {get_model_display_name(ex.model_name)}. Try switching to a model with a higher context window to proceed.",
+            detail=ex.detail,
+            better_models=better_models,
+        )
+
+    def _create_completion_event(self) -> BaseModel:
+        """Create a query completion event BaseModel for streaming."""
+
+        class QueryCompletionEvent(BaseModel):
+            type: str = "QUERY_COMPLETE"
+
+        return QueryCompletionEvent()
+
+    def _create_close_event(self) -> BaseModel:
+        """Create a stream end close connection event BaseModel for streaming."""
+
+        class StreamEndCloseEvent(BaseModel):
+            type: str = "STREAM_END_CLOSE_CONNECTION"
+
+        return StreamEndCloseEvent()
+
+    def _create_end_event(self) -> BaseModel:
+        """Create a stream end event BaseModel for streaming."""
+
+        class StreamEndEvent(BaseModel):
+            type: str = "STREAM_END"
+
+        return StreamEndEvent()

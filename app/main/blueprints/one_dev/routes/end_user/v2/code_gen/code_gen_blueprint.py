@@ -2,11 +2,6 @@ import asyncio
 import json
 from typing import Any, Dict, List
 
-from deputydev_core.exceptions.exceptions import InputTokenLimitExceededError
-from deputydev_core.exceptions.llm_exceptions import (
-    LLMThrottledError,
-)
-from deputydev_core.llm_handler.dataclasses.main import StreamingEventType
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.config_manager import ConfigManager
 from sanic import Blueprint, response
@@ -199,87 +194,26 @@ async def solve_user_query_ws(_request: Request, ws: WebsocketImplProtocol, **kw
                         start_data["new_session_data"] = auth_data.session_refresh_token
                     await ws.send(json.dumps(start_data))
 
-                    data = await QuerySolver().solve_query(
-                        payload=payload, client_data=client_data, save_to_redis=True, task_checker=task_checker
+                    # Start the query solver and get the stream_id (query_id)
+                    query_solver = QuerySolver()
+                    query_id = await query_solver.start_query_solver(
+                        payload=payload, client_data=client_data, task_checker=task_checker
                     )
 
-                    last_block = None
-                    async for data_block in data:
-                        last_block = data_block
-                        await ws.send(json.dumps(data_block.model_dump(mode="json")))
+                    # Get the stream iterator from Redis
+                    stream_iterator = await query_solver.get_stream(query_id)
 
-                    if last_block and last_block.type != StreamingEventType.TOOL_USE_REQUEST_END:
-                        await CodeGenTasksCache.cleanup_session_data(payload.session_id)
-                        await ws.send(json.dumps({"type": "QUERY_COMPLETE"}))
-                        await ws.send(json.dumps({"type": "STREAM_END_CLOSE_CONNECTION"}))
-                    else:
-                        await ws.send(json.dumps({"type": "STREAM_END"}))
+                    async for data_block in stream_iterator:
+                        event_data = data_block.model_dump(mode="json")
+                        await ws.send(json.dumps(event_data))
 
-                except LLMThrottledError as ex:
-                    await ws.send(
-                        json.dumps(
-                            {
-                                "type": "STREAM_ERROR",
-                                "status": "LLM_THROTTLED",
-                                "provider": getattr(ex, "provider", None),
-                                "model": getattr(ex, "model", None),
-                                "retry_after": ex.retry_after,
-                                "message": "This chat is currently being throttled. You can wait, or switch to a different model.",
-                                "detail": ex.detail,
-                                "region": getattr(ex, "region", None),
-                            }
-                        )
-                    )
+                        # Handle session cleanup for specific events
+                        if event_data.get("type") == "QUERY_COMPLETE":
+                            await CodeGenTasksCache.cleanup_session_data(payload.session_id)
 
-                except InputTokenLimitExceededError as ex:
-                    AppLogger.log_error(
-                        f"Input token limit exceeded: model={ex.model_name}, tokens={ex.current_tokens}/{ex.max_tokens}"
-                    )
-
-                    # Get available models with higher token limits
-                    better_models: List[Dict[str, Any]] = []
-
-                    try:
-                        code_gen_models = ConfigManager.configs.get("CODE_GEN_LLM_MODELS", [])
-                        llm_models_config = ConfigManager.configs.get("LLM_MODELS", {})
-                        current_model_limit = ex.max_tokens
-
-                        for model in code_gen_models:
-                            model_name = model.get("name")
-                            if model_name and model_name != ex.model_name and model_name in llm_models_config:
-                                model_config = llm_models_config[model_name]
-                                model_token_limit = model_config.get("INPUT_TOKENS_LIMIT", 100000)
-
-                                if model_token_limit > current_model_limit:
-                                    enhanced_model = model.copy()
-                                    enhanced_model["input_token_limit"] = model_token_limit
-                                    better_models.append(enhanced_model)
-
-                        # Sort by token limit (highest first)
-                        better_models.sort(key=lambda m: m.get("input_token_limit", 0), reverse=True)
-
-                    except Exception as model_error:  # noqa : BLE001
-                        AppLogger.log_error(f"Error fetching better models: {model_error}")
-
-                    error_data: Dict[str, Any] = {
-                        "type": "STREAM_ERROR",
-                        "status": "INPUT_TOKEN_LIMIT_EXCEEDED",
-                        "model": ex.model_name,
-                        "current_tokens": ex.current_tokens,
-                        "max_tokens": ex.max_tokens,
-                        "query": payload.query,
-                        "message": f"Your message exceeds the context window supported by {get_model_display_name(ex.model_name)}. Try switching to a model with a higher context window to proceed.",
-                        "detail": ex.detail,
-                        "better_models": better_models,
-                    }
-
-                    await ws.send(json.dumps(error_data))
-
-                except asyncio.CancelledError as ex:
-                    await ws.send(json.dumps({"type": "STREAM_ERROR", "message": f"LLM processing error: {str(ex)}"}))
                 except Exception as ex:  # noqa: BLE001
-                    AppLogger.log_error(f"Error in solving query: {ex}")
-                    await ws.send(json.dumps({"type": "STREAM_ERROR", "message": f"LLM processing error: {str(ex)}"}))
+                    AppLogger.log_error(f"Error in WebSocket solve_query: {ex}")
+                    await ws.send(json.dumps({"type": "STREAM_ERROR", "message": f"WebSocket error: {str(ex)}"}))
                 finally:
                     await task_checker.stop_monitoring()
 
