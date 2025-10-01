@@ -14,7 +14,6 @@ from app.backend_common.utils.sanic_wrapper.types import ResponseDict
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     InlineEditInput,
     QuerySolverInput,
-    QuerySolverResumeInput,
     TerminalCommandEditInput,
     UserQueryEnhancerInput,
 )
@@ -120,7 +119,12 @@ async def cancel_chat(
 @authenticate
 @ensure_session_id(auto_create=True)
 async def solve_user_query_ws(
-    _request: Request, ws: WebsocketImplProtocol, client_data: ClientData, auth_data: AuthData, session_id: int, **kwargs: Any
+    _request: Request,
+    ws: WebsocketImplProtocol,
+    client_data: ClientData,
+    auth_data: AuthData,
+    session_id: int,
+    **kwargs: Any,
 ) -> None:
     # TODO: Remove after MessageSession deprecation
     session_type: str = _request.headers.get("X-Session-Type")
@@ -143,7 +147,6 @@ async def solve_user_query_ws(
             payload_dict["session_id"] = session_id
             payload_dict["session_type"] = session_type
             payload_dict["user_team_id"] = auth_data.user_team_id
-
 
             # Validate and parse payload
             payload = await query_solver.payload_processor.get_payload_from_raw_data(payload_dict)

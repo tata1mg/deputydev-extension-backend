@@ -22,7 +22,7 @@ from app.main.blueprints.one_dev.utils.cancellation_checker import CancellationC
 class QuerySolver:
     """Main QuerySolver class that orchestrates query processing using various components."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.payload_processor = PayloadProcessor()
         self.core_processor = CoreProcessor()
 
@@ -49,7 +49,6 @@ class QuerySolver:
         ws: WebsocketImplProtocol,
     ) -> None:
         """Execute the query processing and stream results."""
-        print("Starting execute_query_processing with payload:", payload)
         task_checker = CancellationChecker(payload.session_id)
         try:
             await task_checker.start_monitoring()
@@ -74,23 +73,18 @@ class QuerySolver:
                 query_id, stream_task = await self.start_query_solver_with_task(
                     payload=payload, client_data=client_data, task_checker=task_checker
                 )
-                
+
                 # Wait for the stream initialization event to ensure the stream has started
                 await self._wait_for_stream_initialization(query_id)
-                
+
                 stream_iterator = StreamHandler.stream_from(stream_id=query_id, offset_id="0")
 
             # Stream events to client
-            curr = 0
             async for data_block in stream_iterator():
-                curr += 1
                 event_data = data_block.model_dump(mode="json")
-                print("Sending to WebSocket:", event_data)
                 await ws.send(json.dumps(event_data))
 
-                # if curr > 4:
-                #     await ws.close()
-                #     break
+                # for testing retry, break websocket here
 
                 # Handle session cleanup for specific events
                 if event_data.get("type") == "QUERY_COMPLETE":
@@ -173,10 +167,10 @@ class QuerySolver:
 
         return query_id, task
 
-    async def _wait_for_stream_initialization(self, query_id: str, timeout: float = 60) -> None: 
+    async def _wait_for_stream_initialization(self, query_id: str, check_timeout: float = 60.0) -> None:
         """
         Wait for the stream initialization event to ensure the stream has started.
-        
+
         Args:
             query_id: The query/stream ID to wait for
             timeout: Maximum time to wait in seconds
@@ -184,22 +178,22 @@ class QuerySolver:
         try:
             # Create a stream iterator to check for the initialization event
             stream_iterator = StreamHandler.stream_from(stream_id=query_id, offset_id="0")
-            
+
             # Wait for the first event with timeout
             start_time = asyncio.get_event_loop().time()
             async for event in stream_iterator():
-                if hasattr(event, 'data') and isinstance(event.data, dict):
+                if hasattr(event, "data") and isinstance(event.data, dict):
                     event_data = event.data
-                    if event_data.get('type') == 'STREAM_INITIALIZED':
+                    if event_data.get("type") == "STREAM_INITIALIZED":
                         return
-                elif hasattr(event, 'type') and event.type == 'STREAM_INITIALIZED':
+                elif hasattr(event, "type") and event.type == "STREAM_INITIALIZED":
                     return
-                
+
                 # Check timeout
-                if asyncio.get_event_loop().time() - start_time > timeout:
+                if asyncio.get_event_loop().time() - start_time > check_timeout:
                     break
-                    
-        except Exception:
+
+        except Exception:  # noqa: BLE001
             # If anything goes wrong, just continue with a small delay
             await asyncio.sleep(0.1)
 

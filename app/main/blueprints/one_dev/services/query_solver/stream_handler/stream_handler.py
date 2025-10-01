@@ -1,6 +1,6 @@
 import asyncio
 from datetime import datetime
-from typing import Any, AsyncIterator, Awaitable, Callable, Dict, List, Optional, Tuple
+from typing import Any, AsyncIterator, Callable, Dict, List, Optional, Tuple
 
 import redis.asyncio as redis
 from pydantic import BaseModel
@@ -44,7 +44,6 @@ class StreamHandler(BaseServiceCache):
         Returns:
             str: The message ID that was assigned to the message
         """
-        print("Pushing to stream:", stream_id, "Data:", data)
         stream_key = cls._get_stream_key(stream_id)
 
         # Serialize BaseModel to JSON string for Redis storage
@@ -59,7 +58,7 @@ class StreamHandler(BaseServiceCache):
         return result
 
     @classmethod
-    def get_from_stream(
+    def get_from_stream(  # noqa: C901
         cls,
         stream_id: str,
         offset_id: str = "0",
@@ -81,12 +80,10 @@ class StreamHandler(BaseServiceCache):
         Returns:
             Callable[[], AsyncIterator[BaseModel]]: A function that returns an async iterator
         """
-        print("Getting from stream:", stream_id, "Offset ID:", offset_id)
 
         async def stream_iterator() -> AsyncIterator[BaseModel]:
             """Async iterator function that yields BaseModel messages from the stream."""
 
-            print("Starting stream iterator for:", stream_id, "from offset:", offset_id)
             stream_key = cls._get_stream_key(stream_id)
             current_offset = offset_id
 
@@ -95,14 +92,13 @@ class StreamHandler(BaseServiceCache):
                 {stream_key: current_offset}, count=count
             )
 
-            for stream_name, messages in existing_messages:
+            for _stream_name, messages in existing_messages:
                 for message_id, fields in messages:
                     # Update current offset to the latest message ID
                     current_offset = message_id
 
                     # Parse and yield the BaseModel message
                     message_data: BaseModel = cls._parse_stream_message(message_id, fields, model_class)
-                    print("Yielding existing message:", message_data)
                     yield message_data
 
             # Now start blocking reads for new messages
@@ -113,37 +109,32 @@ class StreamHandler(BaseServiceCache):
                 try:
                     # Check if stream still exists and hasn't expired
                     stream_exists: bool = await cls._stream_exists(stream_key)
-                    print("Stream exists check for", stream_key, ":", stream_exists)
                     if not stream_exists:
-                        print("Stream has expired or does not exist anymore:", stream_key)
                         break
 
                     # Blocking read for new messages
                     new_messages: List[Tuple[str, List[Tuple[str, Dict[str, str]]]]] = await cls._redis_xread(
                         {stream_key: next_offset}, count=count, block=block_timeout
                     )
-                    print("New messages read from stream:", new_messages)
 
                     if not new_messages:
                         # Timeout occurred, continue to next iteration
                         continue
 
-                    for stream_name, messages in new_messages:
+                    for _stream_name, messages in new_messages:
                         for message_id, fields in messages:
                             # Update offset for next read
                             next_offset = message_id
 
                             # Parse and yield the BaseModel message
                             message_data: BaseModel = cls._parse_stream_message(message_id, fields, model_class)
-                            print("Yielding new message:", message_data)
                             yield message_data
 
                 except asyncio.CancelledError:
                     # Handle task cancellation gracefully
                     break
-                except Exception as e:
+                except Exception:  # noqa: BLE001
                     # Log error and continue (could add proper logging here)
-                    print(f"Error reading from stream {stream_id}: {e}")
                     await asyncio.sleep(1)  # Brief pause before retry
 
         return stream_iterator
@@ -330,7 +321,7 @@ class StreamHandler(BaseServiceCache):
                 info[key] = value
 
             return info
-        except Exception:
+        except Exception:  # noqa: BLE001
             return None
 
     @classmethod

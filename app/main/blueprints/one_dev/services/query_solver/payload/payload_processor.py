@@ -60,7 +60,6 @@ class PayloadProcessor:
                 session_data_dict["llm_model"] = payload.llm_model.value
             await CodeGenTasksCache.set_session_data(payload.session_id, session_data_dict)
 
-
     async def get_payload_from_raw_data(self, raw_data: Dict[str, Any]) -> QuerySolverInput | QuerySolverResumeInput:
         final_raw_payload = raw_data.copy()
         if raw_data.get("type") == "PAYLOAD_ATTACHMENT" and raw_data.get("attachment_id") is not None:
