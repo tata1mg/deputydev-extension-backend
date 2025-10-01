@@ -25,7 +25,7 @@ class EventManager:
 
         return StreamErrorEvent(message=error_message)
 
-    def create_llm_throttled_error_event(self, ex) -> BaseModel:
+    def create_llm_throttled_error_event(self, ex: Exception) -> BaseModel:
         """
         Create a throttled error event BaseModel for streaming.
 
@@ -54,7 +54,7 @@ class EventManager:
             region=getattr(ex, "region", None),
         )
 
-    async def create_token_limit_error_event(self, ex, query: str) -> BaseModel:
+    async def create_token_limit_error_event(self, ex: Exception, query: str) -> BaseModel:
         """
         Create a token limit exceeded error event BaseModel for streaming.
 
@@ -88,7 +88,7 @@ class EventManager:
             # Sort by token limit (highest first)
             better_models.sort(key=lambda m: m.get("input_token_limit", 0), reverse=True)
 
-        except Exception as model_error:
+        except Exception as model_error:  # noqa: BLE001
             AppLogger.log_error(f"Error fetching better models: {model_error}")
 
         def get_model_display_name(model_name: str) -> str:
@@ -99,7 +99,7 @@ class EventManager:
                     if model.get("name") == model_name:
                         return model.get("display_name", model_name)
                 return model_name
-            except Exception:
+            except Exception:  # noqa : BLE001
                 return model_name
 
         class TokenLimitErrorEvent(BaseModel):
