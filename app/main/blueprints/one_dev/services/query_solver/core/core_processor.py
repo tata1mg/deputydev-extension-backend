@@ -39,7 +39,7 @@ from app.main.blueprints.one_dev.utils.cancellation_checker import CancellationC
 class CoreProcessor:
     """Handle core query processing operations for QuerySolver."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.agent_manager = AgentManager()
         self.model_manager = ModelManager()
         self.session_manager = SessionManager()
@@ -83,7 +83,7 @@ class CoreProcessor:
         self,
         payload: QuerySolverInput,
         client_data: ClientData,
-        llm_handler,
+        llm_handler: Any,
         reasoning: Optional[Reasoning],
         save_to_redis: bool,
         task_checker: Optional[CancellationChecker],
@@ -198,7 +198,7 @@ class CoreProcessor:
         self,
         payload: QuerySolverInput,
         client_data: ClientData,
-        llm_handler,
+        llm_handler: Any,
         reasoning: Optional[Reasoning],
         task_checker: Optional[CancellationChecker],
     ) -> AsyncIterator[BaseModel]:
@@ -337,7 +337,7 @@ class CoreProcessor:
             error_event = self.event_manager.create_error_event(f"LLM processing error: {str(ex)}")
             await StreamHandler.push_to_stream(stream_id=query_id, data=error_event)
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             # Handle other errors by pushing error event to stream
             AppLogger.log_error(f"Error in query solver: {e}")
             error_event = self.event_manager.create_error_event(f"LLM processing error: {str(e)}")

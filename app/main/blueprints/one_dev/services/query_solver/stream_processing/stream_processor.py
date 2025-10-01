@@ -51,7 +51,7 @@ from app.main.blueprints.one_dev.services.repository.agent_chats.repository impo
 class StreamProcessor:
     """Handle streaming operations for QuerySolver."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.summary_manager = SummaryManager()
 
     async def get_final_stream_iterator(  # noqa: C901
