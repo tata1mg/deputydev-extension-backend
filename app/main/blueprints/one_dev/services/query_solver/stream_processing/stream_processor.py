@@ -44,8 +44,8 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
     ThinkingBlockEnd,
     ThinkingBlockStart,
 )
-from app.main.blueprints.one_dev.services.repository.agent_chats.repository import AgentChatsRepository
 from app.main.blueprints.one_dev.services.query_solver.summary.summary_manager import SummaryManager
+from app.main.blueprints.one_dev.services.repository.agent_chats.repository import AgentChatsRepository
 
 
 class StreamProcessor:
@@ -91,8 +91,7 @@ class StreamProcessor:
                         metadata={
                             "llm_model": llm_model.value,
                             "agent_name": agent_name,
-                            **({
-                                "reasoning": reasoning.value} if reasoning else {}),
+                            **({"reasoning": reasoning.value} if reasoning else {}),
                         },
                         query_id=query_id,
                         previous_queries=previous_queries,
@@ -133,8 +132,7 @@ class StreamProcessor:
                         metadata={
                             "llm_model": llm_model.value,
                             "agent_name": agent_name,
-                            **({
-                                "reasoning": reasoning.value} if reasoning else {}),
+                            **({"reasoning": reasoning.value} if reasoning else {}),
                         },
                         query_id=query_id,
                         previous_queries=previous_queries,
@@ -174,8 +172,7 @@ class StreamProcessor:
                         metadata={
                             "llm_model": llm_model.value,
                             "agent_name": agent_name,
-                            **({
-                                "reasoning": reasoning.value} if reasoning else {}),
+                            **({"reasoning": reasoning.value} if reasoning else {}),
                         },
                         query_id=query_id,
                         previous_queries=previous_queries,
@@ -221,8 +218,7 @@ class StreamProcessor:
                         metadata={
                             "llm_model": llm_model.value,
                             "agent_name": agent_name,
-                            **({
-                                "reasoning": reasoning.value} if reasoning else {}),
+                            **({"reasoning": reasoning.value} if reasoning else {}),
                         },
                         query_id=query_id,
                         previous_queries=previous_queries,

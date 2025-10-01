@@ -3,7 +3,6 @@ from typing import Any, AsyncIterator, Dict, Optional
 from uuid import uuid4
 
 from deputydev_core.llm_handler.dataclasses.main import (
-    ParsedLLMCallResponse,
     PromptCacheConfig,
     StreamingEventType,
 )
@@ -75,9 +74,7 @@ class CoreProcessor:
             )
         elif payload.batch_tool_responses:
             # Handle tool responses
-            return await self._handle_tool_responses(
-                payload, client_data, llm_handler, reasoning, task_checker
-            )
+            return await self._handle_tool_responses(payload, client_data, llm_handler, reasoning, task_checker)
         else:
             raise ValueError("Invalid input")
 
@@ -180,8 +177,7 @@ class CoreProcessor:
             prompt_handler_instance=llm_inputs.prompt(params=prompt_vars_to_use),
             metadata={
                 "agent_name": agent_instance.agent_name,
-                **({
-                    "reasoning": reasoning.value} if reasoning else {}),
+                **({"reasoning": reasoning.value} if reasoning else {}),
             },
         )
         return await self.stream_processor.get_final_stream_iterator(

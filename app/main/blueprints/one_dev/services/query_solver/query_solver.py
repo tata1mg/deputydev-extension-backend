@@ -86,6 +86,7 @@ class QuerySolver:
 
         except Exception as ex:  # noqa: BLE001
             from deputydev_core.utils.app_logger import AppLogger
+
             AppLogger.log_error(f"Error in WebSocket solve_query: {ex}")
             await ws.send(json.dumps({"type": "STREAM_ERROR", "message": f"WebSocket error: {str(ex)}"}))
         finally:

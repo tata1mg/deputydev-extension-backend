@@ -102,8 +102,7 @@ class ModelManager:
                         metadata={
                             "llm_model": llm_model.value,
                             "agent_name": agent_name,
-                            **({
-                                "reasoning": reasoning.value} if reasoning else {}),
+                            **({"reasoning": reasoning.value} if reasoning else {}),
                         },
                         query_id=query_id,
                         previous_queries=[],
