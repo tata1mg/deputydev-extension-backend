@@ -27,8 +27,8 @@ RUN mkdir -p /root/.ssh && \
     ssh-keyscan github.com >> /root/.ssh/known_hosts
 
 # Create SSH keys from build args with proper formatting
-RUN echo -e "$SSH_PRIVATE_KEY" > /root/.ssh/id_ed25519 && \
-    echo -e "$SSH_PUBLIC_KEY" > /root/.ssh/id_ed25519.pub && \
+RUN printf '%s\n' "$SSH_PRIVATE_KEY" > /root/.ssh/id_ed25519 && \
+    printf '%s\n' "$SSH_PUBLIC_KEY" > /root/.ssh/id_ed25519.pub && \
     chmod 600 /root/.ssh/id_ed25519 && \
     chmod 644 /root/.ssh/id_ed25519.pub && \
     chown root:root /root/.ssh/id_ed25519 /root/.ssh/id_ed25519.pub
