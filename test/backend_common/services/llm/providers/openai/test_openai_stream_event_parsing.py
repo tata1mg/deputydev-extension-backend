@@ -30,10 +30,10 @@ from deputydev_core.llm_handler.dataclasses.main import (
     ToolUseRequestEnd,
     ToolUseRequestStart,
 )
+from deputydev_core.llm_handler.providers.openai.llm_provider import OpenAI
 
 # ConfigManager is automatically initialized by conftest.py fixture
 from app.backend_common.models.dto.message_thread_dto import ContentBlockCategory
-from deputydev_core.llm_handler.providers.openai.llm_provider import OpenAI
 
 # Import fixtures from organized fixture modules
 from test.fixtures.openai import (

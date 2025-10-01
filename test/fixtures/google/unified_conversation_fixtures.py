@@ -9,7 +9,6 @@ import base64
 from typing import List
 
 import pytest
-
 from deputydev_core.llm_handler.dataclasses.unified_conversation_turn import (
     AssistantConversationTurn,
     ToolConversationTurn,
