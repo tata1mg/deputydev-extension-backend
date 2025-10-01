@@ -119,8 +119,9 @@ async def cancel_chat(
 @validate_client_version
 @authenticate
 @ensure_session_id(auto_create=True)
-async def solve_user_query_ws(_request: Request, ws: WebsocketImplProtocol, client_data: ClientData, auth_data: AuthData, session_id: int) -> None:
-
+async def solve_user_query_ws(
+    _request: Request, ws: WebsocketImplProtocol, client_data: ClientData, auth_data: AuthData, session_id: int
+) -> None:
     # TODO: Remove after MessageSession deprecation
     session_type: str = _request.headers.get("X-Session-Type")
 
