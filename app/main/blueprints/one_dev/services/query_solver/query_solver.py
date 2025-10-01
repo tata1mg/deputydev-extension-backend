@@ -4,8 +4,6 @@ from typing import Any, AsyncIterator, Dict, List, Optional, Union
 from uuid import uuid4
 
 from deputydev_core.llm_handler.core.handler import LLMHandler
-from deputydev_core.utils.app_logger import AppLogger
-from sanic.server.websockets.impl import WebsocketImplProtocol
 from deputydev_core.llm_handler.dataclasses.main import (
     NonStreamingParsedLLMCallResponse,
     ParsedLLMCallResponse,
@@ -38,16 +36,11 @@ from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.config_manager import ConfigManager
 from pydantic import BaseModel
+from sanic.server.websockets.impl import WebsocketImplProtocol
 
 from app.backend_common.caches.code_gen_tasks_cache import CodeGenTasksCache
 from app.backend_common.models.dto.extension_sessions_dto import ExtensionSessionData
 from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
-from app.backend_common.repository.extension_sessions.repository import (
-    ExtensionSessionRepository,
-)
-from app.backend_common.repository.message_threads.repository import (
-    MessageThreadRepository,
-)
 from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload
 from app.backend_common.services.llm.llm_service_manager import LLMServiceManager
 from app.backend_common.utils.dataclasses.main import AuthData, ClientData
@@ -126,37 +119,37 @@ class QuerySolver:
         attachment_data = await ChatAttachmentsRepository.get_attachment_by_id(attachment_id=attachment_id)
         if not attachment_data or getattr(attachment_data, "status", None) == "deleted":
             raise ValueError(f"Attachment with ID {attachment_id} not found or already deleted.")
-        
+
         s3_key = attachment_data.s3_key
         try:
             object_bytes = await ChatFileUpload.get_file_data_by_s3_key(s3_key=s3_key)
             s3_payload = json.loads(object_bytes.decode("utf-8"))
         except (json.JSONDecodeError, UnicodeDecodeError) as e:
             raise ValueError(f"Failed to decode JSON payload from S3: {e}")
-        
+
         # Preserve important fields from original payload
         for field in ("session_id", "session_type", "auth_token"):
             if field in payload_dict:
                 s3_payload[field] = payload_dict[field]
-        
+
         # Cleanup S3 resources
         try:
             await ChatFileUpload.delete_file_by_s3_key(s3_key=s3_key)
         except Exception:  # noqa: BLE001
             AppLogger.log_error(f"Failed to delete S3 file {s3_key}")
-        
+
         try:
             await ChatAttachmentsRepository.update_attachment_status(attachment_id, "deleted")
         except Exception:  # noqa: BLE001
             AppLogger.log_error(f"Failed to update status for attachment {attachment_id}")
-        
+
         return s3_payload
 
     @staticmethod
     async def handle_session_data_caching(payload: QuerySolverInput) -> None:
         """Handle session data caching for the payload."""
         await CodeGenTasksCache.cleanup_session_data(payload.session_id)
-        
+
         session_data_dict = {}
         if payload.query:
             session_data_dict["query"] = payload.query
@@ -175,7 +168,7 @@ class QuerySolver:
         task_checker = CancellationChecker(payload.session_id)
         try:
             await task_checker.start_monitoring()
-            
+
             # Send stream start notification
             start_data = {"type": "STREAM_START"}
             if auth_data.session_refresh_token:
@@ -1150,7 +1143,6 @@ class QuerySolver:
         """
         async for event in StreamHandler.stream_from(stream_id=query_id, offset_id=offset_id):
             yield event
-
 
     async def resume_stream(
         self,

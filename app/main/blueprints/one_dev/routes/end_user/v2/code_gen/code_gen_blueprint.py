@@ -2,7 +2,6 @@ import asyncio
 import json
 from typing import Any, Dict, List
 
-from deputydev_core.utils.app_logger import AppLogger
 from deputydev_core.utils.config_manager import ConfigManager
 from sanic import Blueprint, response
 from sanic.server.websockets.impl import WebsocketImplProtocol
@@ -133,7 +132,7 @@ async def solve_user_query_ws(_request: Request, ws: WebsocketImplProtocol, **kw
     pinger_task = None
     try:
         pinger_task = asyncio.create_task(query_solver.start_pinger(ws))
-        
+
         while True:
             payload_dict = await ws.recv()
             payload_dict = json.loads(payload_dict)
@@ -143,7 +142,7 @@ async def solve_user_query_ws(_request: Request, ws: WebsocketImplProtocol, **kw
             # Case 1: S3 payload (has attachment_id)
             if query_solver._is_s3_payload(payload_dict):
                 payload_dict = await query_solver.process_s3_payload(payload_dict)
-            
+
             # Case 2: Resume payload - check if it has resume_query_id
             if payload_dict.get("resume_query_id"):
                 payload = QuerySolverResumeInput(**payload_dict, user_team_id=auth_data.user_team_id)
@@ -154,10 +153,8 @@ async def solve_user_query_ws(_request: Request, ws: WebsocketImplProtocol, **kw
                 await query_solver.handle_session_data_caching(payload)
 
             # Execute query processing
-            _main_task = asyncio.create_task(
-                query_solver.execute_query_processing(payload, client_data, auth_data, ws)
-            )
-            
+            _main_task = asyncio.create_task(query_solver.execute_query_processing(payload, client_data, auth_data, ws))
+
     except Exception as error:
         if pinger_task:
             pinger_task.cancel()
