@@ -1,6 +1,6 @@
 import asyncio
 import json
-from typing import Any, AsyncIterator, Dict, Optional, Union
+from typing import Any, AsyncIterator, Dict, Optional, Tuple, Union
 from uuid import uuid4
 
 from pydantic import BaseModel
@@ -49,6 +49,7 @@ class QuerySolver:
         ws: WebsocketImplProtocol,
     ) -> None:
         """Execute the query processing and stream results."""
+        print("Starting execute_query_processing with payload:", payload)
         task_checker = CancellationChecker(payload.session_id)
         try:
             await task_checker.start_monitoring()
@@ -60,7 +61,7 @@ class QuerySolver:
             await ws.send(json.dumps(start_data))
 
             # Handle different payload types
-            if  isinstance(payload, QuerySolverResumeInput):
+            if isinstance(payload, QuerySolverResumeInput):
                 # Resume case: get existing query_id and start from offset
                 query_id = await self.start_query_solver(
                     payload=payload, client_data=client_data, task_checker=task_checker
@@ -69,10 +70,14 @@ class QuerySolver:
                 offset_id = payload.resume_offset_id or "0"
                 stream_iterator = StreamHandler.stream_from(stream_id=query_id, offset_id=offset_id)
             else:
-                # Normal case: start new query processing
-                query_id = await self.start_query_solver(
+                # Normal case: start new query processing and ensure stream starts before subscription
+                query_id, stream_task = await self.start_query_solver_with_task(
                     payload=payload, client_data=client_data, task_checker=task_checker
                 )
+                
+                # Wait for the stream initialization event to ensure the stream has started
+                await self._wait_for_stream_initialization(query_id)
+                
                 stream_iterator = StreamHandler.stream_from(stream_id=query_id, offset_id="0")
 
             # Stream events to client
@@ -83,9 +88,9 @@ class QuerySolver:
                 print("Sending to WebSocket:", event_data)
                 await ws.send(json.dumps(event_data))
 
-                if curr > 4:
-                    await ws.close()
-                    break
+                # if curr > 4:
+                #     await ws.close()
+                #     break
 
                 # Handle session cleanup for specific events
                 if event_data.get("type") == "QUERY_COMPLETE":
@@ -120,7 +125,7 @@ class QuerySolver:
         Returns the query_id which is used as stream_id for getting the stream.
         """
         # Check if this is a resume payload
-        if  isinstance(payload, QuerySolverResumeInput):
+        if isinstance(payload, QuerySolverResumeInput):
             return await self.resume_stream(payload)
 
         # Normal payload - generate new query_id and start processing
@@ -137,6 +142,66 @@ class QuerySolver:
         )
 
         return query_id
+
+    async def start_query_solver_with_task(
+        self,
+        payload: Union[QuerySolverInput, QuerySolverResumeInput],
+        client_data: ClientData,
+        task_checker: Optional[CancellationChecker] = None,
+    ) -> Tuple[str, Optional[asyncio.Task]]:
+        """
+        Wrapper function that starts the query solver and returns both query_id and the task.
+        Returns the query_id and task for better control over stream synchronization.
+        """
+        # Check if this is a resume payload
+        if isinstance(payload, QuerySolverResumeInput):
+            query_id = await self.resume_stream(payload)
+            return query_id, None
+
+        # Normal payload - generate new query_id and start processing
+        query_id = uuid4().hex
+
+        # Start the query solving process in background and return the task
+        task = asyncio.create_task(
+            self.core_processor.solve_query_with_streaming(
+                payload=payload,
+                client_data=client_data,
+                query_id=query_id,
+                task_checker=task_checker,
+            )
+        )
+
+        return query_id, task
+
+    async def _wait_for_stream_initialization(self, query_id: str, timeout: float = 60) -> None: 
+        """
+        Wait for the stream initialization event to ensure the stream has started.
+        
+        Args:
+            query_id: The query/stream ID to wait for
+            timeout: Maximum time to wait in seconds
+        """
+        try:
+            # Create a stream iterator to check for the initialization event
+            stream_iterator = StreamHandler.stream_from(stream_id=query_id, offset_id="0")
+            
+            # Wait for the first event with timeout
+            start_time = asyncio.get_event_loop().time()
+            async for event in stream_iterator():
+                if hasattr(event, 'data') and isinstance(event.data, dict):
+                    event_data = event.data
+                    if event_data.get('type') == 'STREAM_INITIALIZED':
+                        return
+                elif hasattr(event, 'type') and event.type == 'STREAM_INITIALIZED':
+                    return
+                
+                # Check timeout
+                if asyncio.get_event_loop().time() - start_time > timeout:
+                    break
+                    
+        except Exception:
+            # If anything goes wrong, just continue with a small delay
+            await asyncio.sleep(0.1)
 
     async def resume_stream(
         self,

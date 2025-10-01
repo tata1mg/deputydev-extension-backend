@@ -53,6 +53,7 @@ class CoreProcessor:
         client_data: ClientData,
         save_to_redis: bool = False,
         task_checker: Optional[CancellationChecker] = None,
+        query_id: Optional[str] = None,
     ) -> AsyncIterator[BaseModel]:
         """Main query solving logic."""
         llm_handler = LLMServiceManager().create_llm_handler(
@@ -70,7 +71,7 @@ class CoreProcessor:
         if payload.query:
             # Handle new query
             return await self._handle_new_query(
-                payload, client_data, llm_handler, reasoning, save_to_redis, task_checker
+                payload, client_data, llm_handler, reasoning, save_to_redis, task_checker, query_id
             )
         elif payload.batch_tool_responses:
             # Handle tool responses
@@ -86,9 +87,11 @@ class CoreProcessor:
         reasoning: Optional[Reasoning],
         save_to_redis: bool,
         task_checker: Optional[CancellationChecker],
+        query_id: Optional[str] = None,
     ) -> AsyncIterator[BaseModel]:
         """Handle new query processing."""
-        generated_query_id = uuid4().hex
+        # Use provided query_id if available, otherwise generate a new one
+        generated_query_id = query_id or uuid4().hex
 
         if not payload.llm_model:
             raise ValueError("LLM model is required for query solving.")
@@ -283,12 +286,17 @@ class CoreProcessor:
         from deputydev_core.exceptions.llm_exceptions import LLMThrottledError
 
         try:
+            # Push stream initialization event first
+            init_event = self.event_manager.create_stream_start_event()
+            await StreamHandler.push_to_stream(stream_id=query_id, data=init_event)
+
             # Get the stream iterator from the existing solve_query method
             stream_iterator = await self.solve_query(
                 payload=payload,
                 client_data=client_data,
                 save_to_redis=True,
                 task_checker=task_checker,
+                query_id=query_id,
             )
 
             # Stream all events to Redis using StreamHandler

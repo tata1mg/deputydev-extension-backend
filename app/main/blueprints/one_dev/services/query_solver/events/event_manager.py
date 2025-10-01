@@ -139,6 +139,14 @@ class EventManager:
 
         return StreamEndCloseEvent()
 
+    def create_stream_start_event(self) -> BaseModel:
+        """Create a stream start event BaseModel for streaming."""
+
+        class StreamStartEvent(BaseModel):
+            type: str = "STREAM_INITIALIZED"
+
+        return StreamStartEvent()
+
     def create_end_event(self) -> BaseModel:
         """Create a stream end event BaseModel for streaming."""
 

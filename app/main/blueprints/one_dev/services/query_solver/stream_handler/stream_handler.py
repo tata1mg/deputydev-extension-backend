@@ -106,8 +106,8 @@ class StreamHandler(BaseServiceCache):
                     yield message_data
 
             # Now start blocking reads for new messages
-            # Use the last seen message ID, or ">" if we want only new messages
-            next_offset: str = ">" if current_offset == offset_id and current_offset != "0" else current_offset
+            # Use the last seen message ID for XREAD (don't use ">" as it's only for XREADGROUP)
+            next_offset: str = current_offset
 
             while True:
                 try:
@@ -115,7 +115,8 @@ class StreamHandler(BaseServiceCache):
                     stream_exists: bool = await cls._stream_exists(stream_key)
                     print("Stream exists check for", stream_key, ":", stream_exists)
                     if not stream_exists:
-                        continue
+                        print("Stream has expired or does not exist anymore:", stream_key)
+                        break
 
                     # Blocking read for new messages
                     new_messages: List[Tuple[str, List[Tuple[str, Dict[str, str]]]]] = await cls._redis_xread(
