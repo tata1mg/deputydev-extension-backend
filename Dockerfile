@@ -21,17 +21,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       openssh-client \
     && rm -rf /var/lib/apt/lists/*
 
+# Set up SSH for git access to private repositories
+RUN mkdir -p /root/.ssh && \
+    chmod 700 /root/.ssh && \
+    ssh-keyscan github.com >> /root/.ssh/known_hosts
+
 # Create SSH keys from build args with proper formatting
 RUN echo -e "$SSH_PRIVATE_KEY" > /root/.ssh/id_ed25519 && \
     echo -e "$SSH_PUBLIC_KEY" > /root/.ssh/id_ed25519.pub && \
     chmod 600 /root/.ssh/id_ed25519 && \
     chmod 644 /root/.ssh/id_ed25519.pub && \
     chown root:root /root/.ssh/id_ed25519 /root/.ssh/id_ed25519.pub
-
-# Set up SSH for git access to private repositories
-RUN mkdir -p /root/.ssh && \
-    chmod 700 /root/.ssh && \
-    ssh-keyscan github.com >> /root/.ssh/known_hosts
 
 # Install uv for fast, reproducible installs
 RUN pip install uv
