@@ -43,7 +43,6 @@ class LLMServiceManager:
             prompt_factory=prompt_factory,
             prompt_features=prompt_features,
             message_threads_repo=self.message_threads_adapter,
-            chat_attachments_repo=self.chat_attachments_adapter,
             session_cache=self.cache_adapter,
             config=self.config_adapter,
             cache_config=cache_config,
