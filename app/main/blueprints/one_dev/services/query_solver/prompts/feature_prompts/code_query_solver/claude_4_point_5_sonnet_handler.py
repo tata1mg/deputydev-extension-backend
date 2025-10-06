@@ -21,15 +21,15 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.claude.thinking.claude_4_thinking_parser import (
     Claude4ThinkingParser,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.prompts.claude.claude_4_sonnet_custom_code_query_solver_prompt import (
-    Claude4CustomCodeQuerySolverPrompt,
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.prompts.claude.claude_4_point_5_sonnet_custom_code_query_solver_prompt import (
+    Claude4Point5CustomCodeQuerySolverPrompt,
 )
 
 
 class Claude4Point5CustomCodeQuerySolverPromptHandler(BaseClaude4Point5SonnetPromptHandler):
     prompt_type = "CODE_QUERY_SOLVER"
     prompt_category = PromptCategories.CODE_GENERATION.value
-    prompt_class = Claude4CustomCodeQuerySolverPrompt
+    prompt_class = Claude4Point5CustomCodeQuerySolverPrompt
 
     def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
