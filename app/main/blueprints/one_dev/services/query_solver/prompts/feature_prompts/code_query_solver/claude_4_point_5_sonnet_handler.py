@@ -26,7 +26,7 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 )
 
 
-class Claude4CustomCodeQuerySolverPromptHandler(BaseClaude4Point5SonnetPromptHandler):
+class Claude4Point5CustomCodeQuerySolverPromptHandler(BaseClaude4Point5SonnetPromptHandler):
     prompt_type = "CODE_QUERY_SOLVER"
     prompt_category = PromptCategories.CODE_GENERATION.value
     prompt_class = Claude4CustomCodeQuerySolverPrompt
