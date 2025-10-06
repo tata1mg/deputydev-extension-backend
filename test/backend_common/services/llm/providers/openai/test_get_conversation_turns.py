@@ -18,6 +18,7 @@ import json
 from typing import Any, Dict, List
 
 import pytest
+from deputydev_core.llm_handler.providers.openai.llm_provider import OpenAI
 
 from app.backend_common.models.dto.message_thread_dto import (
     MessageThreadActor,
@@ -26,7 +27,6 @@ from app.backend_common.models.dto.message_thread_dto import (
 from app.backend_common.services.chat_file_upload.dataclasses.chat_file_upload import (
     ChatAttachmentDataWithObjectBytes,
 )
-from deputydev_core.llm_handler.providers.openai.llm_provider import OpenAI
 
 
 class TestOpenAIGetConversationTurns:

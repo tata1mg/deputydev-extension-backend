@@ -22,7 +22,6 @@ from deputydev_core.services.chunking.chunk_info import ChunkInfo
 from app.backend_common.models.dto.message_thread_dto import (
     ContentBlockCategory,
     LLModels,
-    LLMUsage,
 )
 from app.main.blueprints.deputy_dev.models.dto.review_agent_chats_dto import (
     ActorType,

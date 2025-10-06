@@ -31,10 +31,10 @@ from deputydev_core.llm_handler.dataclasses.main import (
     PromptCacheConfig,
     UserAndSystemMessages,
 )
+from deputydev_core.llm_handler.providers.anthropic.llm_provider import Anthropic
 
 # Import necessary DTOs and classes
 from app.backend_common.models.dto.message_thread_dto import LLModels
-from deputydev_core.llm_handler.providers.anthropic.llm_provider import Anthropic
 
 # Import all build_llm_payload specific fixtures
 from test.fixtures.anthropic.build_llm_payload_fixtures import *

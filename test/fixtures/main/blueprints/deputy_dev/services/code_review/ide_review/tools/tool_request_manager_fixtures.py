@@ -10,7 +10,6 @@ from typing import Any, Dict, List
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
 from deputydev_core.llm_handler.models.dto.message_thread_dto import (
     ContentBlockCategory,
     TextBlockContent,
@@ -18,6 +17,7 @@ from deputydev_core.llm_handler.models.dto.message_thread_dto import (
     ToolUseRequestContent,
     ToolUseRequestData,
 )
+
 from app.main.blueprints.deputy_dev.services.code_review.ide_review.comments.dataclasses.main import (
     LLMCommentData,
 )

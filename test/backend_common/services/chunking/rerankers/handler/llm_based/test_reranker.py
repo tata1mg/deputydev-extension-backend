@@ -20,6 +20,7 @@ from deputydev_core.llm_handler.models.dto.message_thread_dto import (
     LLModels,
     MessageCallChainCategory,
 )
+
 from app.backend_common.services.chunking.rerankers.handler.llm_based.reranker import LLMBasedChunkReranker
 
 # Import fixtures
@@ -401,9 +402,7 @@ class TestLLMBasedChunkRerankerRerank:
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMServiceManager"
             ) as mock_llm_service_manager_class,
-            patch(
-                "deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array"
-            ) as mock_render,
+            patch("deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array") as mock_render,
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.time.perf_counter"
             ) as mock_time,
@@ -442,13 +441,11 @@ class TestLLMBasedChunkRerankerRerank:
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMServiceManager"
             ) as mock_llm_service_manager_class,
-            patch(
-                "deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array"
-            ) as mock_render,
+            patch("deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array") as mock_render,
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.time.perf_counter"
             ) as mock_time,
-                patch("app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.AppLogger") as mock_logger,
+            patch("app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.AppLogger") as mock_logger,
         ):
             mock_handler = MagicMock()
             mock_handler.start_llm_query = AsyncMock(return_value=malformed_llm_response_none)
@@ -480,9 +477,7 @@ class TestLLMBasedChunkRerankerRerank:
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMServiceManager"
             ) as mock_llm_service_manager_class,
-            patch(
-                "deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array"
-            ) as mock_render,
+            patch("deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array") as mock_render,
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.time.perf_counter"
             ) as mock_time,
@@ -517,13 +512,11 @@ class TestLLMBasedChunkRerankerRerank:
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMServiceManager"
             ) as mock_llm_service_manager_class,
-            patch(
-                "deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array"
-            ) as mock_render,
+            patch("deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array") as mock_render,
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.time.perf_counter"
             ) as mock_time,
-                patch("app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.AppLogger") as mock_logger,
+            patch("app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.AppLogger") as mock_logger,
         ):
             mock_handler = MagicMock()
             mock_handler.start_llm_query = AsyncMock(return_value=successful_llm_response_empty_chunks)
@@ -557,9 +550,7 @@ class TestLLMBasedChunkRerankerRerank:
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMServiceManager"
             ) as mock_llm_service_manager_class,
-            patch(
-                "deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array"
-            ) as mock_render,
+            patch("deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array") as mock_render,
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.time.perf_counter"
             ) as mock_time,
@@ -604,13 +595,11 @@ class TestLLMBasedChunkRerankerRerank:
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMServiceManager"
             ) as mock_llm_service_manager_class,
-            patch(
-                "deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array"
-            ) as mock_render,
+            patch("deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array") as mock_render,
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.time.perf_counter"
             ) as mock_time,
-                patch("app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.AppLogger") as mock_logger,
+            patch("app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.AppLogger") as mock_logger,
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.asyncio.sleep"
             ) as mock_sleep,
@@ -650,9 +639,7 @@ class TestLLMBasedChunkRerankerRerank:
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMServiceManager"
             ) as mock_llm_service_manager_class,
-            patch(
-                "deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array"
-            ) as mock_render,
+            patch("deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array") as mock_render,
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.time.perf_counter"
             ) as mock_time,
@@ -692,9 +679,7 @@ class TestLLMBasedChunkRerankerRerank:
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMServiceManager"
             ) as mock_llm_service_manager_class,
-            patch(
-                "deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array"
-            ) as mock_render,
+            patch("deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array") as mock_render,
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.time.perf_counter"
             ) as mock_time,
@@ -732,9 +717,7 @@ class TestLLMBasedChunkRerankerRerank:
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMServiceManager"
             ) as mock_llm_service_manager_class,
-            patch(
-                "deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array"
-            ) as mock_render,
+            patch("deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array") as mock_render,
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.time.perf_counter"
             ) as mock_time,
@@ -772,9 +755,7 @@ class TestLLMBasedChunkRerankerRerank:
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMServiceManager"
             ) as mock_llm_service_manager_class,
-            patch(
-                "deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array"
-            ) as mock_render,
+            patch("deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array") as mock_render,
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.time.perf_counter"
             ) as mock_time,
@@ -819,9 +800,7 @@ class TestLLMBasedChunkRerankerRerank:
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMServiceManager"
             ) as mock_llm_service_manager_class,
-            patch(
-                "deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array"
-            ) as mock_render,
+            patch("deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array") as mock_render,
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.time.perf_counter"
             ) as mock_time,
@@ -903,9 +882,7 @@ class TestLLMBasedChunkRerankerIntegration:
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.LLMServiceManager"
             ) as mock_llm_service_manager_class,
-            patch(
-                "deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array"
-            ) as mock_render,
+            patch("deputydev_core.services.chunking.utils.snippet_renderer.render_snippet_array") as mock_render,
             patch(
                 "app.backend_common.services.chunking.rerankers.handler.llm_based.reranker.time.perf_counter"
             ) as mock_time,

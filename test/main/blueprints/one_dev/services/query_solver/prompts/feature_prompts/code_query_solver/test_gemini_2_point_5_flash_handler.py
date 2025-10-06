@@ -80,7 +80,6 @@ class TestGemini2Point5FlashCustomCodeQuerySolverPromptHandler:
 
         def test_get_parsed_result_non_streaming(self) -> None:
             """Test parsing of non-streaming LLM response."""
-            from deputydev_core.llm_handler.models.dto.message_thread_dto import TextBlockContent, TextBlockData
 
         mock_response = Mock(spec=NonStreamingResponse)
         mock_response.content = [
@@ -154,7 +153,9 @@ class TestGemini2Point5FlashCustomCodeQuerySolverPromptHandler:
             assert "file_path" in result
             assert "is_diff" in result
 
-    def test_handler_attributes_consistency(self, handler: Gemini2Point5FlashCustomCodeQuerySolverPromptHandler) -> None:
+    def test_handler_attributes_consistency(
+        self, handler: Gemini2Point5FlashCustomCodeQuerySolverPromptHandler
+    ) -> None:
         """Test that handler attributes are consistent and properly set."""
         assert hasattr(handler, "prompt_type")
         assert hasattr(handler, "prompt_category")

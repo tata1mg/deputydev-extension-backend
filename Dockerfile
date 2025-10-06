@@ -4,6 +4,10 @@ ARG USE_CONFIG_FROM_ROOT=false
 # ---------------- Builder Stage ----------------
 FROM python:3.11-slim AS builder
 
+# Re-declare build args for this stage
+ARG SSH_PRIVATE_KEY
+ARG SSH_PUBLIC_KEY
+
 # Environment for reproducible, quiet Python
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -14,7 +18,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       git \
       curl \
       build-essential \
+      openssh-client \
     && rm -rf /var/lib/apt/lists/*
+
+# Set up SSH for git access to private repositories
+RUN mkdir -p /root/.ssh && \
+    chmod 700 /root/.ssh && \
+    ssh-keyscan github.com >> /root/.ssh/known_hosts
+
+# Create SSH keys from build args with proper formatting
+RUN printf '%s\n' "$SSH_PRIVATE_KEY" > /root/.ssh/id_ed25519 && \
+    printf '%s\n' "$SSH_PUBLIC_KEY" > /root/.ssh/id_ed25519.pub && \
+    chmod 600 /root/.ssh/id_ed25519 && \
+    chmod 644 /root/.ssh/id_ed25519.pub && \
+    chown root:root /root/.ssh/id_ed25519 /root/.ssh/id_ed25519.pub
 
 # Install uv for fast, reproducible installs
 RUN pip install uv
