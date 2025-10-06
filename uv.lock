@@ -640,7 +640,7 @@ dev = [
 [[package]]
 name = "deputydev-core"
 version = "8.0.5"
-source = { git = "ssh://git@github.com/tata1mg/deputydev-core.git?rev=8.0.5#e272a96d516cebd5ee586be4111898d278b54245" }
+source = { git = "ssh://git@github.com/tata1mg/deputydev-core.git?rev=8.0.5#48e7840c7acbd9ee00232234fa56ed0da220bc4a" }
 dependencies = [
     { name = "aiobotocore" },
     { name = "aiohttp" },
