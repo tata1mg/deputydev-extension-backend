@@ -222,6 +222,11 @@ class ResponseMetadataBlock(BaseModel):
     type: str
 
 
+class SessionSummaryBlock(BaseModel):
+    type: str = "SESSION_SUMMARY"
+    content: Dict[str, int | str]
+
+
 class TaskCompletionContent(BaseModel):
     query_id: int
     success: bool = True

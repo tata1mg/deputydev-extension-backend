@@ -32,6 +32,7 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     Reasoning,
     ResponseMetadataBlock,
     ResponseMetadataContent,
+    SessionSummaryBlock,
     TaskCompletionBlock,
     TaskCompletionContent,
 )
@@ -64,6 +65,7 @@ class StreamProcessor:
         llm_model: LLModels,
         agent_name: str,
         reasoning: Optional[Reasoning],
+        summary_task: Optional[asyncio.Task[str]] = None,
     ) -> AsyncIterator[BaseModel]:
         """Handle the final stream iterator with all message types."""
         query_summary: Optional[str] = None
@@ -240,6 +242,22 @@ class StreamProcessor:
                 type="RESPONSE_METADATA",
             )
 
+            if summary_task:
+
+                async def _yield_summary() -> None:
+                    try:
+                        summary: str = await summary_task
+                        if summary:
+                            # This uses an asyncio.Queue to inject into the main generator
+                            await queue.put(SessionSummaryBlock(content={"session_id": session_id, "summary": summary}))
+                    except Exception as e:  # noqa: BLE001
+                        AppLogger.log_error(f"Failed to generate session summary: {e}")
+
+                queue: asyncio.Queue[BaseModel] = asyncio.Queue()
+                asyncio.create_task(_yield_summary())
+            else:
+                queue = None
+
             current_message_data: Optional[MessageData] = None
 
             async for data_block in llm_response.parsed_content:
@@ -293,6 +311,9 @@ class StreamProcessor:
                     )
 
                 yield data_block
+                if queue:
+                    while not queue.empty():
+                        yield await queue.get()
 
             # wait till the data has been stored in order to ensure that no race around occurs in submitting tool response
             await llm_response.llm_response_storage_task
@@ -322,5 +343,8 @@ class StreamProcessor:
                     ),
                     type="TASK_COMPLETION",
                 )
+
+                if queue and not queue.empty():
+                    yield await queue.get()
 
         return _streaming_content_block_generator()
