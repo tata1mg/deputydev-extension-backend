@@ -192,6 +192,7 @@ class CoreProcessor:
             llm_model=model_to_use,
             agent_name=agent_instance.agent_name,
             reasoning=reasoning,
+            summary_task=_summary_task,
         )
 
     async def _handle_tool_responses(

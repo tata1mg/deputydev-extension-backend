@@ -90,6 +90,7 @@ class LLMModel(Enum):
     GPT_4_POINT_1 = "GPT_4_POINT_1"
     CLAUDE_4_SONNET = "CLAUDE_4_SONNET"
     CLAUDE_4_SONNET_THINKING = "CLAUDE_4_SONNET_THINKING"
+    CLAUDE_4_POINT_5_SONNET = "CLAUDE_4_POINT_5_SONNET"
     QWEN_3_CODER = "QWEN_3_CODER"
     KIMI_K2 = "KIMI_K2"
     OPENROUTER_GPT_5 = "OPENROUTER_GPT_5"
@@ -219,6 +220,11 @@ class ResponseMetadataContent(BaseModel):
 class ResponseMetadataBlock(BaseModel):
     content: ResponseMetadataContent
     type: str
+
+
+class SessionSummaryBlock(BaseModel):
+    type: str = "SESSION_SUMMARY"
+    content: Dict[str, int | str]
 
 
 class TaskCompletionContent(BaseModel):

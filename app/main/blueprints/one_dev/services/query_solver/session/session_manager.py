@@ -27,11 +27,11 @@ class SessionManager:
         llm_handler: LLMHandler[PromptFeatures],
         user_team_id: int,
         session_type: str,
-    ) -> None:
+    ) -> str:
         """Generate session summary using LLM."""
         current_session = await ExtensionSessionsRepository.find_or_create(session_id, user_team_id, session_type)
         if current_session and current_session.summary:
-            return
+            return current_session.summary
 
         # if no summary, first generate a summary by directly putting first 100 characters of the query.
         # this will be used as a placeholder until the LLM generates a more detailed summary.
@@ -57,6 +57,7 @@ class SessionManager:
 
         generated_summary = llm_response.parsed_content[0].get("summary")
         await ExtensionSessionsRepository.update_session_summary(session_id=session_id, summary=generated_summary)
+        return generated_summary
 
     async def get_last_query_message_for_session(self, session_id: int) -> Optional[MessageThreadDTO]:
         """

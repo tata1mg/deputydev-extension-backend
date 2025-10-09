@@ -7,6 +7,9 @@ from deputydev_core.llm_handler.prompts.base_prompt import BasePrompt
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.claude_3_point_7_sonnet_handler import (
     Claude3Point7CustomCodeQuerySolverPromptHandler,
 )
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.claude_4_point_5_sonnet_handler import (
+    Claude4Point5CustomCodeQuerySolverPromptHandler,
+)
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.claude_4_sonnet_handler import (
     Claude4CustomCodeQuerySolverPromptHandler,
 )
@@ -55,6 +58,7 @@ class CodeQuerySolverPromptFactory(BaseFeaturePromptFactory):
     custom_code_query_solver_prompts: Dict[LLModels, Type[BasePrompt]] = {
         LLModels.CLAUDE_3_POINT_7_SONNET: Claude3Point7CustomCodeQuerySolverPromptHandler,
         LLModels.CLAUDE_4_SONNET: Claude4CustomCodeQuerySolverPromptHandler,
+        LLModels.CLAUDE_4_POINT_5_SONNET: Claude4Point5CustomCodeQuerySolverPromptHandler,
         LLModels.CLAUDE_4_SONNET_THINKING: Claude4ThinkingCustomCodeQuerySolverPromptHandler,
         LLModels.GEMINI_2_POINT_5_PRO: Gemini2Point5ProCustomCodeQuerySolverPromptHandler,
         LLModels.GEMINI_2_POINT_5_FLASH: Gemini2Point5FlashCustomCodeQuerySolverPromptHandler,
