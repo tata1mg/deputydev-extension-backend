@@ -178,9 +178,15 @@ class QuerySolverResumeInput(BaseModel):
     resume_offset_id: Optional[str] = None
 
 
+class LineRange(BaseModel):
+    start_line: int
+    end_line: int
+
+
 class CodeSelectionInput(BaseModel):
     selected_text: str
     file_path: str
+    line_range: Optional[LineRange] = None
 
 
 class InlineEditInput(BaseModel):
@@ -189,6 +195,8 @@ class InlineEditInput(BaseModel):
     tool_use_response: Optional[ToolUseResponseInput] = None
     tool_choice: Literal["none", "auto", "required"] = "auto"
     code_selection: Optional[CodeSelectionInput] = None
+    is_lsp_ready: bool = False
+    repo_path: Optional[str] = None
     auth_data: AuthData
     deputy_dev_rules: Optional[str] = None
     relevant_chunks: List[Any] = []
