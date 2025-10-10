@@ -1041,5 +1041,11 @@
     "DEPUTYDEV_AUTH": {
         "HOST": "http://deputydev-auth:9355",
         "TIMEOUT": 10
+    },
+    "DEPUTYDEV_HYPERLINKS": {
+        "FEATURE_REQUEST_URL": "",
+        "DOCS_URL": "",
+        "REPORT_BUG_URL": "",
+        "REDDIT_PAGE_URL": ""
     }
 }

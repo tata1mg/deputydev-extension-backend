@@ -1,6 +1,7 @@
 from typing import Any, Dict, List
 
 from deputydev_core.llm_handler.models.dto.message_thread_dto import MessageCallChainCategory
+from deputydev_core.utils.config_manager import ConfigManager
 
 from app.backend_common.repository.extension_sessions.repository import (
     ExtensionSessionsRepository,
@@ -48,24 +49,24 @@ class UIProfile:
                 "label": "Feature Request",
                 "type": "Hyperlink",
                 "icon": "https://onemg.gumlet.io/dd_request_feature_24_03.png",
-                "url": "https://forms.gle/Abd1FJJVf3J2daLP7",
+                "url": ConfigManager.configs["DEPUTYDEV_HYPERLINKS"]["FEATURE_REQUEST_URL"],
             },
             {
                 "label": "Docs",
                 "type": "Hyperlink",
                 "icon": "https://onemg.gumlet.io/dd_docs_logo_26_03.png",
-                "url": "https://onedoc.ekdosis.com/docs/deputydev/content/DeputyDev%20-%20VSCode%20plugin/",
+                "url": ConfigManager.configs["DEPUTYDEV_HYPERLINKS"]["DOCS_URL"],
             },
             {
                 "label": "Report a Bug",
                 "type": "Hyperlink",
                 "icon": "https://onemg.gumlet.io/dd_report_bug_24_03.png",
-                "url": "https://forms.gle/s2Youjzo63YU9k7s9",
+                "url": ConfigManager.configs["DEPUTYDEV_HYPERLINKS"]["REPORT_BUG_URL"],
             },
             {
                 "label": "r/DeputyDev",
                 "type": "Hyperlink",
                 "icon": "https://onemg.gumlet.io/dd_reddit_logo_v2_23_03.png",
-                "url": "https://www.reddit.com/r/DeputyDev/",
+                "url": ConfigManager.configs["DEPUTYDEV_HYPERLINKS"]["REDDIT_PAGE_URL"],
             },
         ]
