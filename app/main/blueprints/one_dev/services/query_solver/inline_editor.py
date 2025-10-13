@@ -20,7 +20,6 @@ from deputydev_core.llm_handler.models.dto.message_thread_dto import (
     LLModels,
 )
 from deputydev_core.services.chunking.chunk_info import ChunkInfo, ChunkSourceDetails
-from deputydev_core.utils.config_manager import ConfigManager
 
 from app.backend_common.services.llm.llm_service_manager import LLMServiceManager
 from app.backend_common.utils.dataclasses.main import ClientData
@@ -43,13 +42,9 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
 from app.main.blueprints.one_dev.services.query_solver.prompts.dataclasses.main import (
     PromptFeatures,
 )
-from app.main.blueprints.one_dev.services.query_solver.tools.focused_snippets_searcher import (
-    FOCUSED_SNIPPETS_SEARCHER,
-)
+from app.main.blueprints.one_dev.services.query_solver.tools.get_usage_tool import GET_USAGE_TOOL
+from app.main.blueprints.one_dev.services.query_solver.tools.grep_search import GREP_SEARCH
 from app.main.blueprints.one_dev.services.query_solver.tools.iterative_file_reader import ITERATIVE_FILE_READER
-from app.main.blueprints.one_dev.services.query_solver.tools.related_code_searcher import (
-    RELATED_CODE_SEARCHER,
-)
 from app.main.blueprints.one_dev.services.query_solver.tools.replace_in_file import REPLACE_IN_FILE
 from app.main.blueprints.one_dev.services.query_solver.tools.task_completed import TASK_COMPLETION
 from app.main.blueprints.one_dev.services.repository.agent_chats.repository import AgentChatsRepository
@@ -62,7 +57,7 @@ from .prompts.factory import PromptFeatureFactory
 
 class InlineEditGenerator:
     async def _get_conversation_turns_from_agent_chat_for_inline_edit(
-        self, agent_chats: List[AgentChatDTO], llm_model: LLModels
+        self, agent_chats: List[AgentChatDTO], llm_model: LLModels, payload: InlineEditInput
     ) -> List[UnifiedConversationTurn]:
         conv_turns: List[UnifiedConversationTurn] = []
         for agent_chat in agent_chats:
@@ -81,6 +76,8 @@ class InlineEditGenerator:
                         else None,
                         "deputy_dev_rules": None,
                         "relevant_chunks": [],
+                        "is_lsp_ready": payload.is_lsp_ready,
+                        "repo_path": payload.repo_path,
                     }
                 )
                 prompt_text = prompt_handler.get_prompt()
@@ -198,15 +195,13 @@ class InlineEditGenerator:
             prompt_factory=PromptFeatureFactory,
             prompt_features=PromptFeatures,
         )
-        tools_to_use = [FOCUSED_SNIPPETS_SEARCHER, ITERATIVE_FILE_READER]
-        if ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"]:
-            tools_to_use.append(RELATED_CODE_SEARCHER)
+        tools_to_use = [ITERATIVE_FILE_READER, GREP_SEARCH, REPLACE_IN_FILE]
 
         if payload.llm_model and LLModels(payload.llm_model.value) == LLModels.GPT_4_POINT_1:
             tools_to_use.append(TASK_COMPLETION)
             payload.tool_choice = "required"
-
-        tools_to_use.append(REPLACE_IN_FILE)
+        if payload.is_lsp_ready:
+            tools_to_use.append(GET_USAGE_TOOL)
 
         if payload.tool_use_response:
             all_chats_for_session = await AgentChatsRepository.get_chats_by_session_id(session_id=payload.session_id)
@@ -231,14 +226,14 @@ class InlineEditGenerator:
                 update_data=AgentChatUpdateRequest(message_data=agent_chat_with_tool_call.message_data),
             )
             conversation_turns = await self._get_conversation_turns_from_agent_chat_for_inline_edit(
-                agent_chats=all_chats_for_session, llm_model=LLModels(payload.llm_model.value)
+                agent_chats=all_chats_for_session, llm_model=LLModels(payload.llm_model.value), payload=payload
             )
 
             llm_response = await llm_handler.start_llm_query(
                 session_id=payload.session_id,
                 tools=tools_to_use,
                 stream=False,
-                parallel_tool_calls=False,
+                parallel_tool_calls=True,
                 tool_choice="required",
                 conversation_turns=conversation_turns,
                 prompt_feature=PromptFeatures.INLINE_EDITOR,
@@ -248,6 +243,8 @@ class InlineEditGenerator:
                     "deputy_dev_rules": None,
                     "relevant_chunks": [],
                     "query": payload.query,
+                    "is_lsp_ready": payload.is_lsp_ready,
+                    "repo_path": payload.repo_path,
                 },
             )
 
@@ -264,6 +261,7 @@ class InlineEditGenerator:
         if payload.query and payload.code_selection:
             # store in agent_chats
             generated_query_id = uuid4().hex
+            code_selection = payload.code_selection
             agent_chat = await AgentChatsRepository.create_chat(
                 chat_data=AgentChatCreateRequest(
                     session_id=payload.session_id,
@@ -275,17 +273,17 @@ class InlineEditGenerator:
                             CodeSnippetFocusItem(
                                 chunks=[
                                     ChunkInfo(
-                                        content=payload.code_selection.selected_text,
+                                        content=code_selection.selected_text,
                                         source_details=ChunkSourceDetails(
-                                            file_path=payload.code_selection.file_path,
+                                            file_path=code_selection.file_path,
                                             start_line=-1,
                                             end_line=-1,
                                         ),
                                     )
                                 ],
-                                path=payload.code_selection.file_path,
+                                path=code_selection.file_path,
                                 # value as file name (taken from file path)
-                                value=payload.code_selection.file_path.split("/")[-1],
+                                value=code_selection.file_path.split("/")[-1],
                             )
                         ],
                     ),
@@ -302,6 +300,8 @@ class InlineEditGenerator:
                     "code_selection": payload.code_selection,
                     "deputy_dev_rules": None,
                     "relevant_chunks": [],
+                    "is_lsp_ready": payload.is_lsp_ready,
+                    "repo_path": payload.repo_path,
                 },
                 previous_responses=[],
                 tools=tools_to_use,
@@ -309,7 +309,7 @@ class InlineEditGenerator:
                 stream=False,
                 session_id=payload.session_id,
                 conversation_turns=await self._get_conversation_turns_from_agent_chat_for_inline_edit(
-                    agent_chats=[agent_chat], llm_model=LLModels(payload.llm_model.value)
+                    agent_chats=[agent_chat], llm_model=LLModels(payload.llm_model.value), payload=payload
                 ),
             )
 
