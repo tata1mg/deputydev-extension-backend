@@ -14,7 +14,7 @@ class WebSocketUtils:
             while True:
                 await asyncio.sleep(interval)
                 try:
-                    await ws.send(json.dumps({"type": "PING"}))
+                    await ws.send(json.dumps({"data": {"type": "PING"}}))
                 except Exception:  # noqa: BLE001
                     break  # stop pinging if connection breaks
         except asyncio.CancelledError:
