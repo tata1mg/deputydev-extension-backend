@@ -81,7 +81,7 @@ class StreamHandler(BaseServiceCache):
             Callable[[], AsyncIterator[BaseModel]]: A function that returns an async iterator
         """
 
-        async def stream_iterator() -> AsyncIterator[BaseModel]:
+        async def stream_iterator() -> AsyncIterator[BaseModel]:  # noqa: C901
             """Async iterator function that yields BaseModel messages from the stream."""
 
             stream_key = cls._get_stream_key(stream_id)
@@ -129,6 +129,13 @@ class StreamHandler(BaseServiceCache):
                             # Parse and yield the BaseModel message
                             message_data: BaseModel = cls._parse_stream_message(message_id, fields, model_class)
                             yield message_data
+
+                            if (
+                                hasattr(message_data, "data")
+                                and (message_data.data or {}).get("type") == "STREAM_END_CLOSE_CONNECTION"
+                            ):
+                                # If this is a close connection event, stop the iterator
+                                break
 
                 except asyncio.CancelledError:
                     # Handle task cancellation gracefully
