@@ -289,6 +289,7 @@ class CoreProcessor:
         try:
             # Push stream initialization event first
             init_event = self.event_manager.create_stream_start_event()
+            await asyncio.sleep(5)  # Small delay to ensure order
             await StreamHandler.push_to_stream(stream_id=query_id, data=init_event)
 
             # Get the stream iterator from the existing solve_query method

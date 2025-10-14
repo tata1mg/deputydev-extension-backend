@@ -175,27 +175,28 @@ class QuerySolver:
             query_id: The query/stream ID to wait for
             timeout: Maximum time to wait in seconds
         """
-        try:
-            # Create a stream iterator to check for the initialization event
-            stream_iterator = StreamHandler.stream_from(stream_id=query_id, offset_id="0")
+        start_time = asyncio.get_event_loop().time()
+        while True:
+            try:
+                # Create a stream iterator to check for the initialization event
+                stream_iterator = StreamHandler.stream_from(stream_id=query_id, offset_id="0")
 
-            # Wait for the first event with timeout
-            start_time = asyncio.get_event_loop().time()
-            async for event in stream_iterator():
-                if hasattr(event, "data") and isinstance(event.data, dict):
-                    event_data = event.data
-                    if event_data.get("type") == "STREAM_INITIALIZED":
+                # Wait for the first event with timeout
+                async for event in stream_iterator():
+                    if hasattr(event, "data") and isinstance(event.data, dict):
+                        event_data = event.data
+                        if event_data.get("type") == "STREAM_INITIALIZED":
+                            return
+                    elif hasattr(event, "type") and event.type == "STREAM_INITIALIZED":
                         return
-                elif hasattr(event, "type") and event.type == "STREAM_INITIALIZED":
-                    return
 
                 # Check timeout
                 if asyncio.get_event_loop().time() - start_time > check_timeout:
                     break
 
-        except Exception:  # noqa: BLE001
-            # If anything goes wrong, just continue with a small delay
-            await asyncio.sleep(0.1)
+            except Exception:  # noqa: BLE001
+                # If stream not found yet, wait and retry
+                await asyncio.sleep(1)
 
     async def resume_stream(
         self,
