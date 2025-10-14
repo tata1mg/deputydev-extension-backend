@@ -57,7 +57,7 @@ class QuerySolver:
             start_data = {"type": "STREAM_START"}
             if auth_data.session_refresh_token:
                 start_data["new_session_data"] = auth_data.session_refresh_token
-            await ws.send(json.dumps(start_data))
+            await ws.send(json.dumps({"data": start_data}))
 
             # Handle different payload types
             if isinstance(payload, QuerySolverResumeInput):
@@ -94,7 +94,7 @@ class QuerySolver:
             from deputydev_core.utils.app_logger import AppLogger
 
             AppLogger.log_error(f"Error in WebSocket solve_query: {ex}")
-            await ws.send(json.dumps({"type": "STREAM_ERROR", "message": f"WebSocket error: {str(ex)}"}))
+            await ws.send(json.dumps({"data": {"type": "STREAM_ERROR", "message": f"WebSocket error: {str(ex)}"}}))
         finally:
             await task_checker.stop_monitoring()
 
