@@ -376,6 +376,29 @@
                 "SAFE_HISTORY_TOKEN_LIMIT": 0
             }
         },
+        "CLAUDE_4_POINT_5_HAIKU": {
+            "ACCESS_KEY": "",
+            "INPUT_TOKENS_LIMIT": 180000,
+            "MAX_TOKENS": 8192,
+            "NAME": "us.anthropic.claude-haiku-4-5-20251001-v1:0",
+            "PROMPT_CACHING_SUPPORTED": true,
+            "PROVIDER": "ANTHROPIC",
+            "VERSION": "bedrock-2023-05-31",
+            "STREAM_BATCH_SIZE": 10,
+            "PROVIDER_CONFIG": {
+                "REGION_AND_IDENTIFIER_LIST": [
+                    {
+                        "AWS_REGION": "us-west-2",
+                        "MODEL_IDENTIFIER": "us.anthropic.claude-haiku-4-5-20251001-v1:0"
+                    }
+                ]
+            },
+            "LIMITS": {
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 10000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 0,
+                "SAFE_HISTORY_TOKEN_LIMIT": 0
+            }
+        },
         "GEMINI_2_POINT_5_PRO": {
             "NAME": "gemini-2.5-pro-preview-03-25",
             "PROVIDER": "GOOGLE",
@@ -892,15 +915,15 @@
         },
         {
             "id": 2,
-            "display_name": "Claude 4 Sonnet",
-            "name": "CLAUDE_4_SONNET",
+            "display_name": "Claude 4.5 Haiku",
+            "name": "CLAUDE_4_POINT_5_HAIKU",
             "provider": "ANTHROPIC",
             "multimodal": true
         },
         {
             "id": 3,
-            "display_name": "Claude 3.7 Sonnet",
-            "name": "CLAUDE_3_POINT_7_SONNET",
+            "display_name": "Claude 4 Sonnet",
+            "name": "CLAUDE_4_SONNET",
             "provider": "ANTHROPIC",
             "multimodal": true
         },

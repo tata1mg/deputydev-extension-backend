@@ -91,6 +91,7 @@ class LLMModel(Enum):
     CLAUDE_4_SONNET = "CLAUDE_4_SONNET"
     CLAUDE_4_SONNET_THINKING = "CLAUDE_4_SONNET_THINKING"
     CLAUDE_4_POINT_5_SONNET = "CLAUDE_4_POINT_5_SONNET"
+    CLAUDE_4_POINT_5_HAIKU = "CLAUDE_4_POINT_5_HAIKU"
     QWEN_3_CODER = "QWEN_3_CODER"
     KIMI_K2 = "KIMI_K2"
     OPENROUTER_GPT_5 = "OPENROUTER_GPT_5"
@@ -200,7 +201,7 @@ class InlineEditInput(BaseModel):
     auth_data: AuthData
     deputy_dev_rules: Optional[str] = None
     relevant_chunks: List[Any] = []
-    llm_model: Optional[LLMModel] = LLMModel.CLAUDE_3_POINT_7_SONNET
+    llm_model: Optional[LLMModel] = LLMModel.CLAUDE_4_POINT_5_SONNET
 
     @field_validator("deputy_dev_rules")
     def character_limit(cls, v: Optional[str]) -> Optional[str]:  # noqa: N805
