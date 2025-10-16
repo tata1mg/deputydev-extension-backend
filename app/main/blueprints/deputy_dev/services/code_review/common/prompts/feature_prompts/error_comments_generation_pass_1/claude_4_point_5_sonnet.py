@@ -1,0 +1,7 @@
+from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
+
+from .claude_4_sonnet import Claude4ErrorCommentsGenerationPass1Prompt
+
+
+class Claude4Point5ErrorCommentsGenerationPass1Prompt(Claude4ErrorCommentsGenerationPass1Prompt):
+    model_name = LLModels.CLAUDE_4_POINT_5_SONNET

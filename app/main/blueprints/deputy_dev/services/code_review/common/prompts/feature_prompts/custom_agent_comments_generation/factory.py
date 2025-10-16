@@ -9,6 +9,7 @@ from .claude_3_point_7_sonnet import (
     Claude3Point7CustomAgentCommentGenerationPrompt,
 )
 from .claude_4_sonnet import Claude4CustomAgentCommentGenerationPrompt
+from .claude_4_point_5_sonnet import Claude4Point5CustomAgentCommentGenerationPrompt
 
 
 class CustomAgentCommentGenerationPromptFactory(BaseFeaturePromptFactory):
@@ -16,6 +17,7 @@ class CustomAgentCommentGenerationPromptFactory(BaseFeaturePromptFactory):
         LLModels.CLAUDE_3_POINT_5_SONNET: Claude3Point5CustomAgentCommentGenerationPrompt,
         LLModels.CLAUDE_3_POINT_7_SONNET: Claude3Point7CustomAgentCommentGenerationPrompt,
         LLModels.CLAUDE_4_SONNET: Claude4CustomAgentCommentGenerationPrompt,
+        LLModels.CLAUDE_4_POINT_5_SONNET: Claude4Point5CustomAgentCommentGenerationPrompt,
     }
 
     @classmethod

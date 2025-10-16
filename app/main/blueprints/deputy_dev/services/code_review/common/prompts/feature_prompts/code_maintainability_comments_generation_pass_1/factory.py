@@ -11,6 +11,7 @@ from .claude_3_point_7_sonnet import (
     Claude3Point7CodeMaintainabilityCommentsGenerationPass1Prompt,
 )
 from .claude_4_sonnet import Claude4CodeMaintainabilityCommentsGenerationPass1Prompt
+from .claude_4_point_5_sonnet import Claude4Point5CodeMaintainabilityCommentsGenerationPass1Prompt
 
 
 class CodeMaintainabilityCommentsGenerationPass1PromptFactory(BaseFeaturePromptFactory):
@@ -18,6 +19,7 @@ class CodeMaintainabilityCommentsGenerationPass1PromptFactory(BaseFeaturePromptF
         LLModels.CLAUDE_3_POINT_5_SONNET: Claude3Point5CodeMaintainabilityCommentsGenerationPass1Prompt,
         LLModels.CLAUDE_3_POINT_7_SONNET: Claude3Point7CodeMaintainabilityCommentsGenerationPass1Prompt,
         LLModels.CLAUDE_4_SONNET: Claude4CodeMaintainabilityCommentsGenerationPass1Prompt,
+        LLModels.CLAUDE_4_POINT_5_SONNET: Claude4Point5CodeMaintainabilityCommentsGenerationPass1Prompt,
     }
 
     @classmethod

@@ -48,16 +48,16 @@ from app.main.blueprints.deputy_dev.services.code_review.ide_review.context.ide_
 
 class AgentFactory:
     agent_type_to_model_map = {
-        AgentTypes.BUSINESS_LOGIC_VALIDATION: LLModels.CLAUDE_3_POINT_7_SONNET,
-        AgentTypes.CODE_MAINTAINABILITY: LLModels.CLAUDE_3_POINT_7_SONNET,
-        AgentTypes.CODE_COMMUNICATION: LLModels.CLAUDE_3_POINT_7_SONNET,
-        AgentTypes.ERROR: LLModels.CLAUDE_3_POINT_7_SONNET,
-        AgentTypes.PERFORMANCE_OPTIMIZATION: LLModels.CLAUDE_3_POINT_7_SONNET,
-        AgentTypes.SECURITY: LLModels.CLAUDE_3_POINT_7_SONNET,
+        AgentTypes.BUSINESS_LOGIC_VALIDATION: LLModels.CLAUDE_4_POINT_5_SONNET,
+        AgentTypes.CODE_MAINTAINABILITY: LLModels.CLAUDE_4_POINT_5_SONNET,
+        AgentTypes.CODE_COMMUNICATION: LLModels.CLAUDE_4_POINT_5_SONNET,
+        AgentTypes.ERROR: LLModels.CLAUDE_4_POINT_5_SONNET,
+        AgentTypes.PERFORMANCE_OPTIMIZATION: LLModels.CLAUDE_4_POINT_5_SONNET,
+        AgentTypes.SECURITY: LLModels.CLAUDE_4_POINT_5_SONNET,
         AgentTypes.PR_SUMMARY: LLModels.GPT_4O,
         AgentTypes.COMMENT_VALIDATION: LLModels.GPT_4_POINT_1,
         AgentTypes.COMMENT_SUMMARIZATION: LLModels.GPT_4_POINT_1,
-        AgentTypes.CUSTOM_COMMENTER_AGENT: LLModels.CLAUDE_3_POINT_7_SONNET,
+        AgentTypes.CUSTOM_COMMENTER_AGENT: LLModels.CLAUDE_4_POINT_5_SONNET,
     }
 
     code_review_agents = {
