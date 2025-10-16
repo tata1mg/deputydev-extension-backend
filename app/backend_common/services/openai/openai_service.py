@@ -42,8 +42,8 @@ class OpenAIManager(BaseClient):
         # save results to redis
 
         if len(batch) == 1:
-            logger.info(f"Input text: {batch[0]}")
-            logger.info(f"Embedding: {normalized_dim}")
+            logger.debug(f"Input text: {batch[0]}")
+            logger.debug(f"Embedding: {normalized_dim}")
         return normalized_dim, response.usage.prompt_tokens
 
     def get_cache_prefix(self) -> str:
@@ -73,13 +73,13 @@ class OpenAIManager(BaseClient):
             AppLogger.log_error(f"Timeout error occurred while embedding: {e}")
         except Exception as e:
             AppLogger.log_warn(e)
-            if any(self.tiktoken_client.count(text) > EMBEDDING_TOKEN_LIMIT for text in batch):
+            if any(self.tiktoken_client.count(text, EMBEDDING_MODEL) > EMBEDDING_TOKEN_LIMIT for text in batch):
                 new_batch = []
                 for text in batch:
-                    if self.tiktoken_client.count(text) > EMBEDDING_TOKEN_LIMIT:
+                    if self.tiktoken_client.count(text, EMBEDDING_MODEL) > EMBEDDING_TOKEN_LIMIT:
                         AppLogger.log_warn(
                             ErrorMessages.TOKEN_COUNT_EXCEED_WARNING.value.format(
-                                count=self.tiktoken_client.count(text),
+                                count=self.tiktoken_client.count(text, EMBEDDING_MODEL),
                                 token_limit=EMBEDDING_TOKEN_LIMIT,
                             )
                         )
