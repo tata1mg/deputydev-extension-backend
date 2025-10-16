@@ -8,8 +8,8 @@ from .claude_3_point_5_sonnet import Claude3Point5CustomAgentCommentGenerationPr
 from .claude_3_point_7_sonnet import (
     Claude3Point7CustomAgentCommentGenerationPrompt,
 )
-from .claude_4_sonnet import Claude4CustomAgentCommentGenerationPrompt
 from .claude_4_point_5_sonnet import Claude4Point5CustomAgentCommentGenerationPrompt
+from .claude_4_sonnet import Claude4CustomAgentCommentGenerationPrompt
 
 
 class CustomAgentCommentGenerationPromptFactory(BaseFeaturePromptFactory):

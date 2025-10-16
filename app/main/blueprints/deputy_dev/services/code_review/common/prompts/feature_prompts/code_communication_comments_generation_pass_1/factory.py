@@ -10,8 +10,8 @@ from .claude_3_point_5_sonnet import (
 from .claude_3_point_7_sonnet import (
     Claude3Point7CodeCommunicationCommentsGenerationPass1Prompt,
 )
-from .claude_4_sonnet import Claude4CodeCommunicationCommentsGenerationPass1Prompt
 from .claude_4_point_5_sonnet import Claude4Point5CodeCommunicationCommentsGenerationPass1Prompt
+from .claude_4_sonnet import Claude4CodeCommunicationCommentsGenerationPass1Prompt
 
 
 class CodeCommunicationCommentsGenerationPass1PromptFactory(BaseFeaturePromptFactory):

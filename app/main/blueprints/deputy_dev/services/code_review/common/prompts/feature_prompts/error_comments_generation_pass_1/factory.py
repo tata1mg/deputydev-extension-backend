@@ -6,8 +6,8 @@ from deputydev_core.llm_handler.prompts.base_prompt import BasePrompt
 
 from .claude_3_point_5_sonnet import Claude3Point5ErrorCommentsGenerationPass1Prompt
 from .claude_3_point_7_sonnet import Claude3Point7ErrorCommentsGenerationPass1Prompt
-from .claude_4_sonnet import Claude4ErrorCommentsGenerationPass1Prompt
 from .claude_4_point_5_sonnet import Claude4Point5ErrorCommentsGenerationPass1Prompt
+from .claude_4_sonnet import Claude4ErrorCommentsGenerationPass1Prompt
 
 
 class ErrorCommentsGenerationPass1PromptFactory(BaseFeaturePromptFactory):

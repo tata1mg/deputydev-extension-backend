@@ -10,8 +10,8 @@ from .claude_3_point_5_sonnet import (
 from .claude_3_point_7_sonnet import (
     Claude3Point7PerformanceOptimizationCommentsGenerationPass1Prompt,
 )
-from .claude_4_sonnet import Claude4PerformanceOptimizationCommentsGenerationPass1Prompt
 from .claude_4_point_5_sonnet import Claude4Point5PerformanceOptimizationCommentsGenerationPass1Prompt
+from .claude_4_sonnet import Claude4PerformanceOptimizationCommentsGenerationPass1Prompt
 
 
 class PerformanceOptimizationCommentsGenerationPass1PromptFactory(BaseFeaturePromptFactory):
