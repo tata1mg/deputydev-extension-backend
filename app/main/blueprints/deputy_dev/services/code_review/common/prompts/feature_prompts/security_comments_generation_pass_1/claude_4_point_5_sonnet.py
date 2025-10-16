@@ -1,0 +1,7 @@
+from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
+
+from .claude_4_sonnet import Claude4SecurityCommentsGenerationPass1Prompt
+
+
+class Claude4Point5SecurityCommentsGenerationPass1Prompt(Claude4SecurityCommentsGenerationPass1Prompt):
+    model_name = LLModels.CLAUDE_4_POINT_5_SONNET
