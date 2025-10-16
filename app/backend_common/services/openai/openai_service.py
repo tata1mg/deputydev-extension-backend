@@ -115,6 +115,9 @@ class OpenAIManager(BaseClient):
             for i, cache_value in enumerate(await CommonCache.mget(cache_keys)):
                 if cache_value:
                     embeddings[i] = np.frombuffer(cache_value, dtype=np.float32)
+                    key_used = cache_keys[i]
+                    # increase the expiry time for the key as it is being used
+                    await CommonCache.expire(key_used, CommonCache._expire_in_sec)
         except Exception as e:  # noqa: BLE001
             logger.exception(e)
 
