@@ -434,6 +434,20 @@ class BaseServiceCache:
 
         await cache_registry[cls._host].mset_with_expire(serialized, expire)
 
+    @classmethod
+    async def expire_many(cls, keys: list[str], expire: int):
+        """Set expire time for a given list of keys.
+        Uses pipelining for better performance.
+
+        :param keys: list of str
+        :param expire: integer ( expiry time in seconds )
+        :return: 1 = key found and expiry set for the key
+                 0 = expiry time not set because key not found
+        """
+        keys = list(map(lambda key: cls.prefixed_key(key), keys))
+        result = await cache_registry[cls._host].expire_many(keys, expire)
+        return result
+
     # FIXME: raise custom exception
     @classmethod
     async def mset_with_varying_ttl(cls, items: list[tuple[str, any, int]]):

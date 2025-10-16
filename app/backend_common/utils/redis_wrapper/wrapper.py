@@ -258,6 +258,12 @@ class RedisWrapper:
             pipeline.set(key, value, ex=ex)
         await pipeline.execute()
 
+    async def expire_many(self, keys: list[str], expire: int):
+        pipeline = self._redis.pipeline(transaction=False)
+        for key in keys:
+            pipeline.expire(key, expire)
+        await pipeline.execute()
+
     async def mset_with_varying_ttl(self, items: list[tuple]):
         pipeline = self._redis.pipeline()
         for key, value, ex in items:

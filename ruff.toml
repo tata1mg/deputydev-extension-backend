@@ -1,5 +1,7 @@
 line-length = 120
 indent-width = 4
+extend-exclude = ["test", "app/backend_common/utils/*", "app/backend_common/repository/db_wrapper.py"]
+
 
 [lint]
 # Allow unused variables when underscore-prefixed
