@@ -18,6 +18,9 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.claude.summary.claude_3_point_7_summary_parser import (
     Claude3Point7SummaryParser,
 )
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.claude.task_plan.base_task_plan_parser import (
+    TaskPlanParser,
+)
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.claude.thinking.claude_3_point_7_thinking_parser import (
     Claude3Point7ThinkingParser,
 )
@@ -55,7 +58,12 @@ class Claude3Point7CustomCodeQuerySolverPromptHandler(BaseClaude3Point7SonnetPro
     async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[BaseModel]:
         return cls.parse_streaming_text_block_events(
             events=llm_response.content,
-            parsers=[Claude3Point7ThinkingParser(), Claude3Point7CodeBlockParser(), Claude3Point7SummaryParser()],
+            parsers=[
+                Claude3Point7ThinkingParser(),
+                Claude3Point7CodeBlockParser(),
+                Claude3Point7SummaryParser(),
+                TaskPlanParser(),
+            ],
         )
 
     @classmethod

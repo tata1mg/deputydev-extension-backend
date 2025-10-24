@@ -147,8 +147,8 @@ class Gpt4Point1CustomQuerySolverPrompt:
 
                 Before proceeding with solving the user's query, check if you need to generate a specific plan for the task. If the task is complex and involves multiple steps, create a plan based on the information available to you. Return this plan in the following format:
                 <task_plan>
-                <step>step 1 description</step>
-                <step>step 2 description</step>
+                <step>step 1 description<completed>false</completed></step>
+                <step>step 2 description<completed>false</completed></step>
                 ...
                 </task_plan>   
                 """)
@@ -296,8 +296,8 @@ class Gpt4Point1CustomQuerySolverPrompt:
 
                 Before proceeding with solving the user's query, check if you need to generate a specific plan for the task. If the task is complex and involves multiple steps, create a plan based on the information available to you. Return this plan in the following format:
                 <task_plan>
-                <step>step 1 description</step>
-                <step>step 2 description</step>
+                <step>step 1 description<completed>false</completed></step>
+                <step>step 2 description<completed>false</completed></step>
                 ...
                 </task_plan>   
                 """

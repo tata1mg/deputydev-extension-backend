@@ -15,6 +15,9 @@ from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.openrouter_models.code_block.gpt_4_point_1_block_parser import (
     Gpt4Point1CodeBlockParser,
 )
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.openrouter_models.task_plan.base_task_plan_parser import (
+    TaskPlanParser,
+)
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.openrouter_models.thinking.gpt_4_1_thinking_block_parser import (
     Gpt4Point1ThinkingParse,
 )
@@ -52,7 +55,7 @@ class Gpt4Point1CustomCodeQuerySolverPromptHandler(BaseGpt4Point1Prompt):
     async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[BaseModel]:
         return cls.parse_streaming_text_block_events(
             events=llm_response.content,
-            parsers=[Gpt4Point1CodeBlockParser(), Gpt4Point1ThinkingParse()],
+            parsers=[Gpt4Point1CodeBlockParser(), Gpt4Point1ThinkingParse(), TaskPlanParser()],
         )
 
     @classmethod
