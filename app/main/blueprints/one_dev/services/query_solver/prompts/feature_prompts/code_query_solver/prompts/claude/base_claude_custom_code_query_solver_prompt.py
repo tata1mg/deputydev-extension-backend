@@ -163,7 +163,14 @@ class BaseClaudeQuerySolverPrompt:
 
                 {self.tool_usage_guidelines(is_write_mode=True)}
             
-                DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of editing file. The diffs should be cleanly applicable to the current code.
+                DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
+
+                Before proceeding with solving the user's query, check if you need to generate a specific plan for the task. If the task is complex and involves multiple steps, create a plan based on the information available to you. Return this plan in the following format:
+                <task_plan>
+                <step>step 1 description</step>
+                <step>step 2 description</step>
+                ...
+                </task_plan>    
                 """)
         else:
             system_message = textwrap.dedent(
@@ -306,6 +313,13 @@ class BaseClaudeQuerySolverPrompt:
                 {self.tool_usage_guidelines(is_write_mode=False)}
 
                 DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
+
+                Before proceeding with solving the user's query, check if you need to generate a specific plan for the task. If the task is complex and involves multiple steps, create a plan based on the information available to you. Return this plan in the following format:
+                <task_plan>
+                <step>step 1 description</step>
+                <step>step 2 description</step>
+                ...
+                </task_plan>    
                 """
             )
         return system_message

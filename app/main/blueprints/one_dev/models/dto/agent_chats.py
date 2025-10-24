@@ -77,8 +77,26 @@ class CodeBlockData(BaseModel):
     file_path: Optional[str] = None
 
 
+class PlanSteps(BaseModel):
+    step_description: str
+    is_completed: bool = False
+
+
+class TaskPlanData(BaseModel):
+    message_type: Literal["TASK_PLAN"] = "TASK_PLAN"
+    latest_plan_steps: List[PlanSteps] = []
+
+
 MessageData = Annotated[
-    Union[TextMessageData, ToolUseMessageData, InfoMessageData, ThinkingInfoData, TaskCompletionData, CodeBlockData],
+    Union[
+        TextMessageData,
+        ToolUseMessageData,
+        InfoMessageData,
+        ThinkingInfoData,
+        TaskCompletionData,
+        CodeBlockData,
+        TaskPlanData,
+    ],
     Field(discriminator="message_type"),
 ]
 

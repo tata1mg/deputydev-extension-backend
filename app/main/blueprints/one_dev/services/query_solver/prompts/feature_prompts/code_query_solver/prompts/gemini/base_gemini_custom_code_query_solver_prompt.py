@@ -476,6 +476,13 @@ class BaseGeminiCustomCodeQuerySolverPrompt:
             Write all generic code in non diff blocks which you want to explain to the user,
             For changing existing files, or existing code, provide diff blocks. Make sure diff blocks are preferred.
             DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
+
+                Before proceeding with solving the user's query, check if you need to generate a specific plan for the task. If the task is complex and involves multiple steps, create a plan based on the information available to you. Return this plan in the following format:
+                <task_plan>
+                <step>step 1 description</step>
+                <step>step 2 description</step>
+                ...
+                </task_plan>   
             At the end, please provide a one liner summary within 20 words of what happened in the current turn.
             Do provide the summary once you're done with the task.
             Do not write anything that you're providing a summary or so. Just send it in the <summary> tag. (IMPORTANT)
