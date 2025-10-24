@@ -511,6 +511,7 @@ class BaseClaudeQuerySolverPrompt:
         thinking_pattern = r"<thinking>(.*?)</thinking>"
         code_block_pattern = r"<code_block>(.*?)</code_block>"
         summary_pattern = r"<summary>(.*?)</summary>"
+        task_plan_pattern = r"<task_plan>(.*?)</task_plan>"
 
         # edge case, check if there is <code_block> tag in the input_string, and if it is not inside any other tag, and there
         # is not ending tag for it, then we append the ending tag for it
@@ -529,13 +530,18 @@ class BaseClaudeQuerySolverPrompt:
             # remove the last thinking tag
             input_string = input_string[:last_thinking_tag] + input_string[last_thinking_tag + len("<thinking>") :]
 
+        last_task_plan_tag = input_string.rfind("<task_plan>")
+        if last_task_plan_tag != -1 and input_string[last_task_plan_tag:].rfind("</task_plan>") == -1:
+            input_string += "</task_plan>"
+
         # Find all occurrences of either pattern
         matches_thinking = re.finditer(thinking_pattern, input_string, re.DOTALL)
         matches_code_block = re.finditer(code_block_pattern, input_string, re.DOTALL)
         matches_summary = re.finditer(summary_pattern, input_string, re.DOTALL)
+        matches_task_plan = re.finditer(task_plan_pattern, input_string, re.DOTALL)
 
         # Combine matches and sort by start position
-        matches = list(matches_thinking) + list(matches_code_block) + list(matches_summary)
+        matches = list(matches_thinking) + list(matches_code_block) + list(matches_summary) + list(matches_task_plan)
         matches.sort(key=lambda match: match.start())
 
         last_end = 0
@@ -554,6 +560,10 @@ class BaseClaudeQuerySolverPrompt:
                 result.append({"type": "CODE_BLOCK", "content": code_block_info})
             elif match.re.pattern == thinking_pattern:
                 result.append({"type": "THINKING_BLOCK", "content": {"text": match.group(1).strip()}})
+            elif match.re.pattern == task_plan_pattern:
+                planning_list = re.findall(r"<step>(.*?)</step>", match.group(1), re.DOTALL)
+                plan_steps = [step.strip() for step in planning_list if step.strip()]
+                result.append({"type": "TASK_PLAN_BLOCK", "content": {"steps": plan_steps}})
 
             last_end = end_index
 
