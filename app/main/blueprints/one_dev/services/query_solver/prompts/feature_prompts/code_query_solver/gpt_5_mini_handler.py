@@ -18,6 +18,9 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.openrouter_models.extended_thinking.gpt_5_reasoning_thinking_parser import (
     Gpt5ReasoningThinkingParser,
 )
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.openrouter_models.task_plan.base_task_plan_parser import (
+    TaskPlanParser,
+)
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.prompts.gpt.gpt_5_mini_custom_code_query_solver_prompt import (
     Gpt5MiniCustomQuerySolverPrompt,
 )
@@ -54,7 +57,7 @@ class Gpt5MiniCustomCodeQuerySolverPromptHandler(BaseGpt5Prompt):
         handlers = {"extended_thinking_handler": Gpt5ReasoningThinkingParser()}
         return cls.parse_streaming_text_block_events(
             events=llm_response.content,
-            parsers=[Gpt5CodeBlockParser()],
+            parsers=[Gpt5CodeBlockParser(), TaskPlanParser()],
             handlers=handlers,
         )
 
