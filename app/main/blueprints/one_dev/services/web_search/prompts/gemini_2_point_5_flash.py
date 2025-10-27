@@ -18,7 +18,7 @@ from pydantic import BaseModel
 from app.backend_common.dataclasses.dataclasses import PromptCategories
 
 
-class Gemini2Point0FlashWebSearch(BaseGemini2Point0FlashPrompt):
+class Gemini2Point5FlashWebSearch(BaseGemini2Point0FlashPrompt):
     prompt_type = "WEB_SEARCH"
     prompt_category = PromptCategories.CODE_GENERATION.value
 

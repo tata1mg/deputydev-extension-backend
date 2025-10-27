@@ -153,10 +153,10 @@ class QuerySolverInput(BaseModel):
     repositories: Optional[List[Repository]] = None
     search_web: Optional[bool] = False
     is_lsp_ready: Optional[bool] = False
+    is_indexing_ready: Optional[bool] = False
     llm_model: Optional[LLMModel] = None
     reasoning: Optional[str] = None
     client_tools: List[ClientTool] = []
-    is_embedding_done: Optional[bool] = True
     retry_reason: Optional[RetryReasons] = None
     attachments: List[Attachment] = []
     focus_items: List[FocusItem] = []

@@ -19,7 +19,6 @@ from deputydev_core.llm_handler.dataclasses.unified_conversation_turn import (
     UserConversationTurn,
 )
 from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
-from deputydev_core.utils.config_manager import ConfigManager
 
 from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
 from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload
@@ -81,9 +80,6 @@ from app.main.blueprints.one_dev.services.query_solver.tools.iterative_file_read
 from app.main.blueprints.one_dev.services.query_solver.tools.public_url_content_reader import (
     PUBLIC_URL_CONTENT_READER,
 )
-from app.main.blueprints.one_dev.services.query_solver.tools.related_code_searcher import (
-    RELATED_CODE_SEARCHER,
-)
 from app.main.blueprints.one_dev.services.query_solver.tools.replace_in_file import REPLACE_IN_FILE
 from app.main.blueprints.one_dev.services.query_solver.tools.resolve_import_tool import RESOLVE_IMPORT_TOOL
 from app.main.blueprints.one_dev.services.query_solver.tools.web_search import (
@@ -135,15 +131,14 @@ class QuerySolverAgent:
     def get_all_first_party_tools(self, payload: QuerySolverInput, _client_data: ClientData) -> List[ConversationTool]:
         tools_to_use = [
             ASK_USER_INPUT,
-            FOCUSED_SNIPPETS_SEARCHER,
             FILE_PATH_SEARCHER,
             ITERATIVE_FILE_READER,
             GREP_SEARCH,
             EXECUTE_COMMAND,
             PUBLIC_URL_CONTENT_READER,
         ]
-        if ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"] and payload.is_embedding_done:
-            tools_to_use.append(RELATED_CODE_SEARCHER)
+        if payload.is_indexing_ready:
+            tools_to_use.append(FOCUSED_SNIPPETS_SEARCHER)
         if payload.search_web:
             tools_to_use.append(WEB_SEARCH)
         if payload.is_lsp_ready:
