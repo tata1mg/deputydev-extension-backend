@@ -145,6 +145,10 @@ class PlanSteps(BaseModel):
     is_completed: bool = False
 
 
+class TaskPlanBlockContent(BaseModel):
+    latest_plan_steps: List[PlanSteps] = []
+
+
 class TaskPlanBlock(BaseModel):
     type: Literal[StreamingContentBlockType.TASK_PLAN] = StreamingContentBlockType.TASK_PLAN
-    latest_plan_steps: List[PlanSteps] = []
+    content: TaskPlanBlockContent

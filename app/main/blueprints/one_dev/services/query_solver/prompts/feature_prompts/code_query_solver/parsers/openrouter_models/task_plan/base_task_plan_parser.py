@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from app.main.blueprints.one_dev.models.dto.agent_chats import PlanSteps
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.dataclasses.main import (
     TaskPlanBlock,
+    TaskPlanBlockContent,
 )
 
 
@@ -47,7 +48,7 @@ class TaskPlanParser(BaseOpenrouterModelTextDeltaParser):
             self.start_event_completed = True
             self.event_buffer.append(
                 TaskPlanBlock(
-                    latest_plan_steps=all_steps,
+                    content=TaskPlanBlockContent(latest_plan_steps=all_steps),
                 )
             )
 

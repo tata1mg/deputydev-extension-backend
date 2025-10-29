@@ -243,7 +243,7 @@ class StreamProcessor:
                     session_id=session_id,
                     actor=ActorType.ASSISTANT,
                     message_data=TaskPlanData(
-                        latest_plan_steps=event.latest_plan_steps,
+                        latest_plan_steps=event.content.latest_plan_steps,
                     ),
                     message_type=ChatMessageType.TASK_PLAN,
                     metadata={
