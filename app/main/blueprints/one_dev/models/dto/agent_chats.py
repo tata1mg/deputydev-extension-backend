@@ -11,6 +11,9 @@ from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import (
     FocusItem,
     Repository,
 )
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.dataclasses.main import (
+    PlanSteps,
+)
 
 
 class ActorType(str, Enum):
@@ -26,6 +29,7 @@ class MessageType(str, Enum):
     TASK_COMPLETION = "TASK_COMPLETION"
     THINKING = "THINKING"
     CODE_BLOCK = "CODE_BLOCK"
+    TASK_PLAN = "TASK_PLAN"
 
 
 class TextMessageData(BaseModel):
@@ -75,11 +79,6 @@ class CodeBlockData(BaseModel):
     language: str
     diff: Optional[str] = None
     file_path: Optional[str] = None
-
-
-class PlanSteps(BaseModel):
-    step_description: str
-    is_completed: bool = False
 
 
 class TaskPlanData(BaseModel):

@@ -7,7 +7,10 @@ from deputydev_core.llm_handler.providers.google.prompts.parsers.event_based.tex
 )
 from pydantic import BaseModel
 
-from app.main.blueprints.one_dev.models.dto.agent_chats import PlanSteps, TaskPlanData
+from app.main.blueprints.one_dev.models.dto.agent_chats import PlanSteps
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.dataclasses.main import (
+    TaskPlanBlock,
+)
 
 
 class TaskPlanParser(BaseGoogleTextDeltaParser):
@@ -21,17 +24,18 @@ class TaskPlanParser(BaseGoogleTextDeltaParser):
             self.task_plan_raw_text += event.content.text
 
         # check if we have seen the end tag
-        if re.search(self.ends_with_end_tag_regex, self.task_plan_raw_text):
+        if last_event:
             # extract all steps
             steps = re.findall(r"<step>(.*?)</step>", self.task_plan_raw_text, re.DOTALL)
             all_steps: List[PlanSteps] = []
             for step in steps:
+                # Updated regex to handle <completed> tag at the end and capture step description correctly
                 step_description_match = re.match(
-                    r"(.*?)(<completed>(true|false)</completed>)?", step.strip(), re.DOTALL
+                    r"^(.*?)(?:<completed>(true|false)</completed>)?$", step.strip(), re.DOTALL
                 )
                 if step_description_match:
                     step_description = step_description_match.group(1).strip()
-                    completed_str = step_description_match.group(3)
+                    completed_str = step_description_match.group(2)
                     completed = completed_str == "true" if completed_str else False
                     all_steps.append(
                         PlanSteps(
@@ -42,7 +46,7 @@ class TaskPlanParser(BaseGoogleTextDeltaParser):
             self.task_plan_raw_text = ""
             self.start_event_completed = True
             self.event_buffer.append(
-                TaskPlanData(
+                TaskPlanBlock(
                     latest_plan_steps=all_steps,
                 )
             )

@@ -1,6 +1,6 @@
 # THINKING BLOCKS
 from enum import Enum
-from typing import Annotated, Literal, Optional, Union
+from typing import Annotated, List, Literal, Optional, Union
 
 from deputydev_core.llm_handler.dataclasses.main import (
     MalformedToolUseRequest,
@@ -25,6 +25,7 @@ class StreamingContentBlockType(Enum):
     SUMMARY_BLOCK_DELTA = "SUMMARY_BLOCK_DELTA"
     SUMMARY_BLOCK_END = "SUMMARY_BLOCK_END"
     MALFORMED_TOOL_USE_REQUEST = "MALFORMED_TOOL_USE_REQUEST"
+    TASK_PLAN = "TASK_PLAN"
 
 
 # CODE_BLOCK CONTENTS
@@ -137,3 +138,13 @@ StreamingContentBlock = Annotated[
     ],
     Field(discriminator="type"),
 ]
+
+
+class PlanSteps(BaseModel):
+    step_description: str
+    is_completed: bool = False
+
+
+class TaskPlanBlock(BaseModel):
+    type: Literal[StreamingContentBlockType.TASK_PLAN] = StreamingContentBlockType.TASK_PLAN
+    latest_plan_steps: List[PlanSteps] = []

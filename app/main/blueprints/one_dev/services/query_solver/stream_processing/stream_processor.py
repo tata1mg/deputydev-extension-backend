@@ -23,6 +23,7 @@ from app.main.blueprints.one_dev.models.dto.agent_chats import (
     AgentChatCreateRequest,
     CodeBlockData,
     MessageData,
+    TaskPlanData,
     TextMessageData,
     ThinkingInfoData,
     ToolUseMessageData,
@@ -41,6 +42,7 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
     CodeBlockDelta,
     CodeBlockEnd,
     CodeBlockStart,
+    TaskPlanBlock,
     ThinkingBlockDelta,
     ThinkingBlockEnd,
     ThinkingBlockStart,
@@ -230,6 +232,33 @@ class StreamProcessor:
 
             return new_data
 
+        async def _update_current_message_data_for_task_plan(
+            current_message_data: Optional[MessageData],
+            event: TaskPlanBlock,
+            previous_queries: List[str],
+        ) -> Optional[MessageData]:
+            new_data: Optional[MessageData] = None
+            await AgentChatsRepository.create_chat(
+                chat_data=AgentChatCreateRequest(
+                    session_id=session_id,
+                    actor=ActorType.ASSISTANT,
+                    message_data=TaskPlanData(
+                        latest_plan_steps=event.latest_plan_steps,
+                    ),
+                    message_type=ChatMessageType.TASK_PLAN,
+                    metadata={
+                        "llm_model": llm_model.value,
+                        "agent_name": agent_name,
+                        **({"reasoning": reasoning.value} if reasoning else {}),
+                    },
+                    query_id=query_id,
+                    previous_queries=previous_queries,
+                )
+            )
+            new_data = None
+
+            return new_data
+
         async def _streaming_content_block_generator() -> AsyncIterator[BaseModel]:  # noqa: C901
             nonlocal llm_response
             nonlocal query_summary
@@ -289,6 +318,11 @@ class StreamProcessor:
                     or isinstance(data_block, ThinkingBlockEnd)
                 ):
                     current_message_data = await _update_current_message_data_for_thinking(
+                        current_message_data, data_block, previous_queries
+                    )
+
+                elif isinstance(data_block, TaskPlanBlock):
+                    current_message_data = await _update_current_message_data_for_task_plan(
                         current_message_data, data_block, previous_queries
                     )
 
