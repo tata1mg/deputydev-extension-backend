@@ -141,7 +141,18 @@ class BaseGrokCustomCodeQuerySolverPrompt:
 
                 {self.tool_usage_guidelines(is_write_mode=True)}
             
-                DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of editing file. The diffs should be cleanly applicable to the current code.
+                DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
+
+                Before proceeding with solving the user's query, check if you need to generate a specific plan for the task.
+                If the task is complex and involves multiple steps, create a plan based on the information available to you.
+                Return this plan in the following format:
+                <task_plan>
+                <step>step 1 description<completed>false</completed></step>
+                <step>step 2 description<completed>false</completed></step>
+                ...
+                </task_plan>
+                Do not create a plan for simple tasks.
+                In each turn, the first step is to update the plan with current status and/or modified further steps. Make sure to update the task completion status only after the task is done. Also, make sure to incrementally update the task status as soon as task is done, before giving next tool call. This will make sure that the user is updated on the progress.
                 """)
         else:
             system_message = textwrap.dedent(
@@ -282,6 +293,17 @@ class BaseGrokCustomCodeQuerySolverPrompt:
                 {self.tool_usage_guidelines(is_write_mode=False)}
 
                 DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
+
+                Before proceeding with solving the user's query, check if you need to generate a specific plan for the task.
+                If the task is complex and involves multiple steps, create a plan based on the information available to you.
+                Return this plan in the following format:
+                <task_plan>
+                <step>step 1 description<completed>false</completed></step>
+                <step>step 2 description<completed>false</completed></step>
+                ...
+                </task_plan>
+                Do not create a plan for simple tasks.
+                In each turn, the first step is to update the plan with current status and/or modified further steps. Make sure to update the task completion status only after the task is done. Also, make sure to incrementally update the task status as soon as task is done, before giving next tool call. This will make sure that the user is updated on the progress.
                 """
             )
         return system_message

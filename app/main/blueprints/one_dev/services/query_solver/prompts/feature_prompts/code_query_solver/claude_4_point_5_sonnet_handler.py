@@ -18,6 +18,9 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.claude.summary.claude_4_summary_parser import (
     Claude4SummaryParser,
 )
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.claude.task_plan.base_task_plan_parser import (
+    TaskPlanParser,
+)
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.claude.thinking.claude_4_thinking_parser import (
     Claude4ThinkingParser,
 )
@@ -55,7 +58,7 @@ class Claude4Point5CustomCodeQuerySolverPromptHandler(BaseClaude4Point5SonnetPro
     async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[BaseModel]:
         return cls.parse_streaming_text_block_events(
             events=llm_response.content,
-            parsers=[Claude4ThinkingParser(), Claude4CodeBlockParser(), Claude4SummaryParser()],
+            parsers=[Claude4ThinkingParser(), Claude4CodeBlockParser(), Claude4SummaryParser(), TaskPlanParser()],
         )
 
     @classmethod

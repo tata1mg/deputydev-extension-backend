@@ -15,6 +15,9 @@ from app.backend_common.dataclasses.dataclasses import PromptCategories
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.openrouter_models.code_block.kimi_k2_code_block_parser import (
     KimiK2CodeBlockParser,
 )
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.openrouter_models.task_plan.base_task_plan_parser import (
+    TaskPlanParser,
+)
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.openrouter_models.thinking.kimi_k2_thinking_parser import (
     KimiK2ThinkingParser,
 )
@@ -52,7 +55,7 @@ class KimiK2CustomCodeQuerySolverPromptHandler(BaseKimiK2Prompt):
     async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[BaseModel]:
         return cls.parse_streaming_text_block_events(
             events=llm_response.content,
-            parsers=[KimiK2CodeBlockParser(), KimiK2ThinkingParser()],
+            parsers=[KimiK2CodeBlockParser(), KimiK2ThinkingParser(), TaskPlanParser()],
         )
 
     @classmethod

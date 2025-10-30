@@ -18,6 +18,9 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.gemini.summary.gemini_2_point_5_pro_summary_parser import (
     Gemini2Point5ProSummaryParser,
 )
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.gemini.task_plan.base_task_plan_parser import (
+    TaskPlanParser,
+)
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.gemini.thinking.gemini_2_point_5_pro_thinking_parser import (
     Gemini2Point5ProThinkingParser,
 )
@@ -59,6 +62,7 @@ class Gemini2Point5FlashCustomCodeQuerySolverPromptHandler(BaseGemini2Point5Flas
                 Gemini2Point5ProThinkingParser(),
                 Gemini2Point5ProCodeBlockParser(),
                 Gemini2Point5ProSummaryParser(),
+                TaskPlanParser(),
             ],
         )
 
