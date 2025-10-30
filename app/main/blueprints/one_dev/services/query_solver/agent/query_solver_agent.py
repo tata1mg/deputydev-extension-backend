@@ -512,6 +512,7 @@ class QuerySolverAgent:
                     latest_plan_turn = self._convert_task_plan_agent_chat_to_conversation_turn(agent_chat)
 
         if latest_plan_turn:
+            conversation_turns[-1].cache_breakpoint = True
             conversation_turns.extend(latest_plan_turn)
         return conversation_turns
 
