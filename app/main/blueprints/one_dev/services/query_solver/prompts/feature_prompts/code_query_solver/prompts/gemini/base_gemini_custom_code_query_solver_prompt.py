@@ -163,6 +163,17 @@ class BaseGeminiCustomCodeQuerySolverPrompt:
                 3. No manual implementation is required from the user.
                 4. This mode requires careful review of the generated changes.
                 This mode is ideal for quick implementations where the user trusts the generated changes.
+
+                Before proceeding with solving the user's query, check if you need to generate a specific plan for the task.
+                If the task is moderate to complex and/or involves multiple steps, create a plan based on the information available to you.
+                Do not create a plan for very simple tasks like greeting and all. For all other cases, create a plan. Planning is very important, and keeping the user updated is too.
+                Return this plan in the following format:
+                <task_plan>
+                <step>step 1 description<completed>false</completed></step>
+                <step>step 2 description<completed>false</completed></step>
+                ...
+                </task_plan>
+                In each turn, the first step is to update the plan with current status and/or modified further steps. Make sure to update the task completion status only after the task is done. Also, make sure to incrementally update the task status as soon as task is done, before giving next tool call. This will make sure that the user is updated on the progress.
                 """.format(
                     tool_use_capabilities_resolution_guidelines=self.tool_use_capabilities_resolution_guidelines(
                         is_write_mode=True
@@ -238,6 +249,17 @@ class BaseGeminiCustomCodeQuerySolverPrompt:
                 {tool_use_capabilities_resolution_guidelines}
 
                 If multiple actions are needed,you can use tools in parallel per message to accomplish the task faster, with each tool use being informed by the result of the previous tool use. Do not assume the outcome of any tool use. Each step must be informed by the previous step's result.
+
+                Before proceeding with solving the user's query, check if you need to generate a specific plan for the task.
+                If the task is moderate to complex and/or involves multiple steps, create a plan based on the information available to you.
+                Do not create a plan for very simple tasks like greeting and all. For all other cases, create a plan. Planning is very important, and keeping the user updated is too.
+                Return this plan in the following format:
+                <task_plan>
+                <step>step 1 description<completed>false</completed></step>
+                <step>step 2 description<completed>false</completed></step>
+                ...
+                </task_plan>
+                In each turn, the first step is to update the plan with current status and/or modified further steps. Make sure to update the task completion status only after the task is done. Also, make sure to incrementally update the task status as soon as task is done, before giving next tool call. This will make sure that the user is updated on the progress.
                 """.format(
                     tool_use_capabilities_resolution_guidelines=self.tool_use_capabilities_resolution_guidelines(
                         is_write_mode=False
@@ -476,15 +498,6 @@ class BaseGeminiCustomCodeQuerySolverPrompt:
             Write all generic code in non diff blocks which you want to explain to the user,
             For changing existing files, or existing code, provide diff blocks. Make sure diff blocks are preferred.
             DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
-
-            Before proceeding with solving the user's query, check if you need to generate a specific plan for the task. If the task is complex and involves multiple steps, create a plan based on the information available to you. Return this plan in the following format:
-            <task_plan>
-            <step>step 1 description<completed>false</completed></step>
-            <step>step 2 description<completed>false</completed></step>
-            ...
-            </task_plan>
-            If a plan has been already generated in the previous messages, use that, and update at the step needed.
-            Make sure to send any planning in this format only. Also, before doing any tool call or ending the task, send the updated plan in the above format only
 
             At the end, please provide a one liner summary within 20 words of what happened in the current turn.
             Do provide the summary once you're done with the task.

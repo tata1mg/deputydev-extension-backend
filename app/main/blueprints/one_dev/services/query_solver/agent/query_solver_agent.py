@@ -491,7 +491,12 @@ class QuerySolverAgent:
 
         conversation_turns: List[UnifiedConversationTurn] = []
 
+        latest_query_id: str = ""
+        latest_plan_turn: Optional[List[UnifiedConversationTurn]] = None
         for agent_chat in agent_chats:
+            if agent_chat.query_id != latest_query_id:
+                latest_query_id = agent_chat.query_id
+                latest_plan_turn = None
             if agent_chat.message_type == "TEXT":
                 conversation_turns.extend(
                     await self._convert_text_agent_chat_to_conversation_turn(agent_chat, prompt_intent)
@@ -503,8 +508,11 @@ class QuerySolverAgent:
             elif agent_chat.message_type == "CODE_BLOCK":
                 conversation_turns.extend(self._convert_code_block_agent_chat_to_conversation_turn(agent_chat))
             elif agent_chat.message_type == "TASK_PLAN":
-                conversation_turns.extend(self._convert_task_plan_agent_chat_to_conversation_turn(agent_chat))
+                if latest_query_id == agent_chat.query_id:
+                    latest_plan_turn = self._convert_task_plan_agent_chat_to_conversation_turn(agent_chat)
 
+        if latest_plan_turn:
+            conversation_turns.extend(latest_plan_turn)
         return conversation_turns
 
     async def get_all_chat_attachments(self, previous_chat_queries: List[AgentChatDTO]) -> List[Attachment]:
