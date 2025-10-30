@@ -477,12 +477,15 @@ class BaseGeminiCustomCodeQuerySolverPrompt:
             For changing existing files, or existing code, provide diff blocks. Make sure diff blocks are preferred.
             DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
 
-                Before proceeding with solving the user's query, check if you need to generate a specific plan for the task. If the task is complex and involves multiple steps, create a plan based on the information available to you. Return this plan in the following format:
-                <task_plan>
-                <step>step 1 description<completed>false</completed></step>
-                <step>step 2 description<completed>false</completed></step>
-                ...
-                </task_plan>   
+            Before proceeding with solving the user's query, check if you need to generate a specific plan for the task. If the task is complex and involves multiple steps, create a plan based on the information available to you. Return this plan in the following format:
+            <task_plan>
+            <step>step 1 description<completed>false</completed></step>
+            <step>step 2 description<completed>false</completed></step>
+            ...
+            </task_plan>
+            If a plan has been already generated in the previous messages, use that, and update at the step needed.
+            Make sure to send any planning in this format only. Also, before doing any tool call or ending the task, send the updated plan in the above format only
+
             At the end, please provide a one liner summary within 20 words of what happened in the current turn.
             Do provide the summary once you're done with the task.
             Do not write anything that you're providing a summary or so. Just send it in the <summary> tag. (IMPORTANT)

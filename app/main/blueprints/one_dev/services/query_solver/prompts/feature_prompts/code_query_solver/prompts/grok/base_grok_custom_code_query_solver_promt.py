@@ -148,7 +148,9 @@ class BaseGrokCustomCodeQuerySolverPrompt:
                 <step>step 1 description<completed>false</completed></step>
                 <step>step 2 description<completed>false</completed></step>
                 ...
-                </task_plan>   
+                </task_plan>
+                If a plan has been already generated in the previous messages, use that, and update at the step needed.
+                Make sure to send any planning in this format only. Also, before doing any tool call or ending the task, send the updated plan in the above format only
                 """)
         else:
             system_message = textwrap.dedent(
@@ -295,7 +297,9 @@ class BaseGrokCustomCodeQuerySolverPrompt:
                 <step>step 1 description<completed>false</completed></step>
                 <step>step 2 description<completed>false</completed></step>
                 ...
-                </task_plan>   
+                </task_plan>
+                If a plan has been already generated in the previous messages, use that, and update at the step needed.
+                Make sure to send any planning in this format only. Also, before doing any tool call or ending the task, send the updated plan in the above format only
                 """
             )
         return system_message
