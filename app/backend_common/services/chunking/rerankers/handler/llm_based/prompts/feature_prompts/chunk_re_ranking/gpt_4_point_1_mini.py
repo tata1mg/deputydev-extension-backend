@@ -1,5 +1,4 @@
 import json
-import textwrap
 from typing import Any, List, Type
 
 from deputydev_core.llm_handler.dataclasses.main import NonStreamingResponse, UserAndSystemMessages
@@ -24,43 +23,45 @@ class Gpt4Point1MiniChunkReRankingPrompt(BaseGpt4Point1MiniPrompt):
     prompt_category = PromptCategories.CODE_GENERATION.value
 
     def get_prompt(self) -> UserAndSystemMessages:
-        focus_chunks_prompt = (
-            textwrap.dedent(f"""
-                Here are the chunks explicitly mentioned by the user:
-                {self.params.get("focus_chunks")}
-            """)
-            if self.params.get("focus_chunks")
-            else ""
+        """
+        Construct a structured prompt for reranking and filtering semantically retrieved code chunks
+        based on user query intent and reasoning.
+        """
+
+        # Construct user message clearly and consistently
+        user_message = f"""
+You are assisting in improving semantic retrieval by filtering and ranking codebase chunks.
+
+The user query reasoning or intent (helps you understand semantic context):
+<explanation>
+{self.params.get("query")}
+</explanation>
+
+Here are semantically retrieved chunks from the codebase:
+<relevant_chunks>
+{self.params.get("relevant_chunks")}
+</relevant_chunks>
+
+<important_instructions>
+- Keep all chunks that are relevant to the user query and reasoning.
+- Do not remove chunks lightly — prefer recall over precision.
+- Ensure no relevant chunk is missed.
+- Output must be valid JSON following this schema:
+{json.dumps(SortedAndFilteredChunksSources.model_json_schema(), indent=2)}
+</important_instructions>
+
+Return **only** a JSON object with the key `"chunks_source"` containing a list of selected source identifiers.
+"""
+
+        system_message = (
+            "You are a highly skilled codebase expert. Your goal is to filter and rerank semantically "
+            "retrieved code chunks based on the reasoning and intent behind the user query."
         )
 
-        related_chunks_prompt = textwrap.dedent(f"""
-            Here are related chunks from the codebase:
-            {self.params.get("related_chunk")}
-        """)
-
-        user_message = textwrap.dedent(f"""
-            The user query:
-            <user_query>{self.params.get("query")}</user_query>
-
-            {focus_chunks_prompt}
-
-            {related_chunks_prompt}
-
-            <important>
-            - Keep all the chunks that are relevant to the user query, do not be too forceful in removing out chunks.
-            - Do not remove chunks lightly; ensure no relevant chunk is missed.
-            </important>
-
-            Please sort and filter the above chunks based on the user's query, and return the result as valid JSON matching the following schema:
-
-            {json.dumps(SortedAndFilteredChunksSources.model_json_schema(), indent=2)}
-
-            Respond with only the JSON object, with key "chunks_source" containing a list of source identifiers. i.e. whatever is inside <source>chunks_source</source>
-        """)
-
-        system_message = "You are a codebase expert filtering and reranking code snippets."
-
-        return UserAndSystemMessages(system_message=system_message, user_message=user_message)
+        return UserAndSystemMessages(
+            system_message=system_message,
+            user_message=user_message.strip(),
+        )
 
     @classmethod
     def get_text_format(cls) -> Type[BaseModel]:
