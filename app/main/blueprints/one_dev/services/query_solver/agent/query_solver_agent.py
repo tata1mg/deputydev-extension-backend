@@ -82,15 +82,16 @@ from app.main.blueprints.one_dev.services.query_solver.tools.iterative_file_read
 from app.main.blueprints.one_dev.services.query_solver.tools.public_url_content_reader import (
     PUBLIC_URL_CONTENT_READER,
 )
-from app.main.blueprints.one_dev.services.query_solver.tools.related_code_searcher import (
-    RELATED_CODE_SEARCHER,
-)
 from app.main.blueprints.one_dev.services.query_solver.tools.replace_in_file import REPLACE_IN_FILE
 from app.main.blueprints.one_dev.services.query_solver.tools.resolve_import_tool import RESOLVE_IMPORT_TOOL
+from app.main.blueprints.one_dev.services.query_solver.tools.semantic_search import (
+    SEMANTIC_SEARCH,
+)
 from app.main.blueprints.one_dev.services.query_solver.tools.web_search import (
     WEB_SEARCH,
 )
 from app.main.blueprints.one_dev.services.query_solver.tools.write_to_file import WRITE_TO_FILE
+from app.main.blueprints.one_dev.utils.version import compare_version
 
 
 class QuerySolverAgent:
@@ -143,8 +144,12 @@ class QuerySolverAgent:
             EXECUTE_COMMAND,
             PUBLIC_URL_CONTENT_READER,
         ]
-        if ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"] and payload.is_embedding_done:
-            tools_to_use.append(RELATED_CODE_SEARCHER)
+        if (
+            ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"]
+            and payload.is_embedding_done
+            and compare_version(_client_data.client_version, "14.0.3", ">=")
+        ):
+            tools_to_use.append(SEMANTIC_SEARCH)
         if payload.search_web:
             tools_to_use.append(WEB_SEARCH)
         if payload.is_lsp_ready:
