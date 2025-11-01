@@ -35,9 +35,8 @@ class LLMBasedChunkReranker(BaseChunkReranker):
 
     async def rerank(
         self,
-        focus_chunks: List[ChunkInfo],
-        related_codebase_chunks: List[ChunkInfo],
         query: str,
+        relevant_chunks: List[ChunkInfo],
     ) -> List[ChunkInfo]:
         llm_handler = LLMServiceManager().create_llm_handler(
             prompt_factory=PromptFeatureFactory,
@@ -55,8 +54,7 @@ class LLMBasedChunkReranker(BaseChunkReranker):
                     llm_model=LLModels.GPT_4_POINT_1_MINI,
                     prompt_vars={
                         "query": query,
-                        "focus_chunks": render_snippet_array(focus_chunks),
-                        "related_chunk": render_snippet_array(related_codebase_chunks),
+                        "relevant_chunks": render_snippet_array(relevant_chunks),
                     },
                     call_chain_category=MessageCallChainCategory.SYSTEM_CHAIN,
                 )
@@ -77,7 +75,7 @@ class LLMBasedChunkReranker(BaseChunkReranker):
             except (IndexError, KeyError, TypeError) as e:
                 AppLogger.log_error(f"Malformed parsed_content in LLM response: {response.parsed_content}, error: {e}")
                 return []
-            return self.get_chunks_from_denotation(related_codebase_chunks + focus_chunks, chunks_source)
+            return self.get_chunks_from_denotation(relevant_chunks, chunks_source)
         else:
             AppLogger.log_warn("Empty or invalid LLM response: No reranked chunks found")
             return []

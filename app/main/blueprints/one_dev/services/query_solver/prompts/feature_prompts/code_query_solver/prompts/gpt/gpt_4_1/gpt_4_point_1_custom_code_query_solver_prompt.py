@@ -143,7 +143,18 @@ class Gpt4Point1CustomQuerySolverPrompt:
 
                 {self.tool_usage_guidelines(is_write_mode=True)}
             
-                DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of editing file. The diffs should be cleanly applicable to the current code.
+                DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
+
+                Before proceeding with solving the user's query, check if you need to generate a specific plan for the task.
+                If the task is complex and involves multiple steps, create a plan based on the information available to you.
+                Return this plan in the following format:
+                <task_plan>
+                <step>step 1 description<completed>false</completed></step>
+                <step>step 2 description<completed>false</completed></step>
+                ...
+                </task_plan>
+                Do not create a plan for simple tasks.
+                In each turn, the first step is to update the plan with current status and/or modified further steps. Make sure to update the task completion status only after the task is done. Also, make sure to incrementally update the task status as soon as task is done, before giving next tool call. This will make sure that the user is updated on the progress.
                 """)
         else:
             system_message = textwrap.dedent(
@@ -286,6 +297,17 @@ class Gpt4Point1CustomQuerySolverPrompt:
                 {self.tool_usage_guidelines(is_write_mode=False)}
 
                 DO NOT PROVIDE TERMS LIKE existing code, previous code here etc. in case of giving diffs. The diffs should be cleanly applicable to the current code.
+
+                Before proceeding with solving the user's query, check if you need to generate a specific plan for the task.
+                If the task is complex and involves multiple steps, create a plan based on the information available to you.
+                Return this plan in the following format:
+                <task_plan>
+                <step>step 1 description<completed>false</completed></step>
+                <step>step 2 description<completed>false</completed></step>
+                ...
+                </task_plan>
+                Do not create a plan for simple tasks.
+                In each turn, the first step is to update the plan with current status and/or modified further steps. Make sure to update the task completion status only after the task is done. Also, make sure to incrementally update the task status as soon as task is done, before giving next tool call. This will make sure that the user is updated on the progress.
                 """
             )
         return system_message
@@ -412,6 +434,8 @@ class Gpt4Point1CustomQuerySolverPrompt:
         # Define the patterns
         thinking_pattern = r"<thinking>(.*?)</thinking>"
         code_block_pattern = r"<code_block>(.*?)</code_block>"
+        summary_pattern = r"<summary>(.*?)</summary>"
+        task_plan_pattern = r"<task_plan>(.*?)</task_plan>"
 
         # edge case, check if there is <code_block> tag in the input_string, and if it is not inside any other tag, and there
         # is not ending tag for it, then we append the ending tag for it
@@ -420,18 +444,28 @@ class Gpt4Point1CustomQuerySolverPrompt:
         if last_code_block_tag != -1 and input_string[last_code_block_tag:].rfind("</code_block>") == -1:
             input_string += "</code_block>"
 
+        last_summary_tag = input_string.rfind("<summary>")
+        if last_summary_tag != -1 and input_string[last_summary_tag:].rfind("</summary>") == -1:
+            input_string += "</summary>"
+
         # for thinking tag, if there is no ending tag, then we just remove the tag, because we can show the thinking block without it
         last_thinking_tag = input_string.rfind("<thinking>")
         if last_thinking_tag != -1 and input_string[last_thinking_tag:].rfind("</thinking>") == -1:
             # remove the last thinking tag
             input_string = input_string[:last_thinking_tag] + input_string[last_thinking_tag + len("<thinking>") :]
 
+        last_task_plan_tag = input_string.rfind("<task_plan>")
+        if last_task_plan_tag != -1 and input_string[last_task_plan_tag:].rfind("</task_plan>") == -1:
+            input_string += "</task_plan>"
+
         # Find all occurrences of either pattern
         matches_thinking = re.finditer(thinking_pattern, input_string, re.DOTALL)
         matches_code_block = re.finditer(code_block_pattern, input_string, re.DOTALL)
+        matches_summary = re.finditer(summary_pattern, input_string, re.DOTALL)
+        matches_task_plan = re.finditer(task_plan_pattern, input_string, re.DOTALL)
 
         # Combine matches and sort by start position
-        matches = list(matches_thinking) + list(matches_code_block)
+        matches = list(matches_thinking) + list(matches_code_block) + list(matches_summary) + list(matches_task_plan)
         matches.sort(key=lambda match: match.start())
 
         last_end = 0
@@ -449,12 +483,11 @@ class Gpt4Point1CustomQuerySolverPrompt:
                 code_block_info = cls.extract_code_block_info(code_block_string)
                 result.append({"type": "CODE_BLOCK", "content": code_block_info})
             elif match.re.pattern == thinking_pattern:
-                result.append(
-                    {
-                        "type": "THINKING_BLOCK",
-                        "content": {"text": match.group(1).strip()},
-                    }
-                )
+                result.append({"type": "THINKING_BLOCK", "content": {"text": match.group(1).strip()}})
+            elif match.re.pattern == task_plan_pattern:
+                planning_list = re.findall(r"<step>(.*?)</step>", match.group(1), re.DOTALL)
+                plan_steps = [step.strip() for step in planning_list if step.strip()]
+                result.append({"type": "TASK_PLAN_BLOCK", "content": {"steps": plan_steps}})
 
             last_end = end_index
 

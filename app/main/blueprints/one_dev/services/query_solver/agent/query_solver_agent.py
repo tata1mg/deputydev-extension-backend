@@ -19,6 +19,7 @@ from deputydev_core.llm_handler.dataclasses.unified_conversation_turn import (
     UserConversationTurn,
 )
 from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels
+from deputydev_core.utils.config_manager import ConfigManager
 
 from app.backend_common.repository.chat_attachments.repository import ChatAttachmentsRepository
 from app.backend_common.services.chat_file_upload.chat_file_upload import ChatFileUpload
@@ -31,6 +32,7 @@ from app.main.blueprints.one_dev.models.dto.agent_chats import (
     ActorType,
     AgentChatDTO,
     CodeBlockData,
+    TaskPlanData,
     TextMessageData,
     ThinkingInfoData,
     ToolUseMessageData,
@@ -65,9 +67,10 @@ from app.main.blueprints.one_dev.services.query_solver.tools.execute_command imp
 from app.main.blueprints.one_dev.services.query_solver.tools.file_path_searcher import (
     FILE_PATH_SEARCHER,
 )
-from app.main.blueprints.one_dev.services.query_solver.tools.focused_snippets_searcher import (
-    FOCUSED_SNIPPETS_SEARCHER,
-)
+
+# from app.main.blueprints.one_dev.services.query_solver.tools.focused_snippets_searcher import (
+#     FOCUSED_SNIPPETS_SEARCHER,
+# )  # noqa: ERA001
 from app.main.blueprints.one_dev.services.query_solver.tools.get_usage_tool import (
     GET_USAGE_TOOL,
 )
@@ -82,10 +85,14 @@ from app.main.blueprints.one_dev.services.query_solver.tools.public_url_content_
 )
 from app.main.blueprints.one_dev.services.query_solver.tools.replace_in_file import REPLACE_IN_FILE
 from app.main.blueprints.one_dev.services.query_solver.tools.resolve_import_tool import RESOLVE_IMPORT_TOOL
+from app.main.blueprints.one_dev.services.query_solver.tools.semantic_search import (
+    SEMANTIC_SEARCH,
+)
 from app.main.blueprints.one_dev.services.query_solver.tools.web_search import (
     WEB_SEARCH,
 )
 from app.main.blueprints.one_dev.services.query_solver.tools.write_to_file import WRITE_TO_FILE
+from app.main.blueprints.one_dev.utils.version import compare_version
 
 
 class QuerySolverAgent:
@@ -137,8 +144,12 @@ class QuerySolverAgent:
             EXECUTE_COMMAND,
             PUBLIC_URL_CONTENT_READER,
         ]
-        if payload.is_indexing_ready:
-            tools_to_use.append(FOCUSED_SNIPPETS_SEARCHER)
+        if (
+            ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"]
+            and payload.is_indexing_ready
+            and compare_version(_client_data.client_version, "14.0.3", ">=")
+        ):
+            tools_to_use.append(SEMANTIC_SEARCH)
         if payload.search_web:
             tools_to_use.append(WEB_SEARCH)
         if payload.is_lsp_ready:
@@ -450,6 +461,30 @@ class QuerySolverAgent:
             )
         ]
 
+    def _convert_task_plan_agent_chat_to_conversation_turn(
+        self, agent_chat: AgentChatDTO
+    ) -> List[UnifiedConversationTurn]:
+        """
+        Convert AgentChatDTO object to UnifiedConversationTurn object for task plan messages.
+        :param agent_chat: AgentChatDTO object containing the chat data.
+        :return: UnifiedConversationTurn object.
+        """
+
+        if not isinstance(agent_chat.message_data, TaskPlanData):
+            raise ValueError(f"Expected message_data to be of type TaskPlanData, got {type(agent_chat.message_data)}")
+
+        return [
+            AssistantConversationTurn(
+                role=UnifiedConversationRole.ASSISTANT,
+                content=[
+                    UnifiedTextConversationTurnContent(
+                        type=UnifiedConversationTurnContentType.TEXT,
+                        text=f"<task_plan>{''.join([f'<step>{step.step_description}<completed>{str(step.is_completed).lower()}</completed></step>' for step in agent_chat.message_data.latest_plan_steps])}</task_plan>",
+                    )
+                ],
+            )
+        ]
+
     async def _convert_agent_chats_to_conversation_turns(
         self, agent_chats: List[AgentChatDTO], prompt_intent: Optional[str] = None
     ) -> List[UnifiedConversationTurn]:
@@ -461,7 +496,12 @@ class QuerySolverAgent:
 
         conversation_turns: List[UnifiedConversationTurn] = []
 
+        latest_query_id: str = ""
+        latest_plan_turn: Optional[List[UnifiedConversationTurn]] = None
         for agent_chat in agent_chats:
+            if agent_chat.query_id != latest_query_id:
+                latest_query_id = agent_chat.query_id
+                latest_plan_turn = None
             if agent_chat.message_type == "TEXT":
                 conversation_turns.extend(
                     await self._convert_text_agent_chat_to_conversation_turn(agent_chat, prompt_intent)
@@ -472,7 +512,13 @@ class QuerySolverAgent:
                 conversation_turns.extend(self._convert_thinking_agent_chat_to_conversation_turn(agent_chat))
             elif agent_chat.message_type == "CODE_BLOCK":
                 conversation_turns.extend(self._convert_code_block_agent_chat_to_conversation_turn(agent_chat))
+            elif agent_chat.message_type == "TASK_PLAN":
+                if latest_query_id == agent_chat.query_id:
+                    latest_plan_turn = self._convert_task_plan_agent_chat_to_conversation_turn(agent_chat)
 
+        if latest_plan_turn:
+            conversation_turns[-1].cache_breakpoint = True
+            conversation_turns.extend(latest_plan_turn)
         return conversation_turns
 
     async def get_all_chat_attachments(self, previous_chat_queries: List[AgentChatDTO]) -> List[Attachment]:

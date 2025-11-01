@@ -18,6 +18,9 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.openrouter_models.extended_thinking.grok_code_fast_1_reasoning_thinking_parser import (
     GrokCodeFast1ReasoningThinkingParser,
 )
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.openrouter_models.task_plan.base_task_plan_parser import (
+    TaskPlanParser,
+)
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.prompts.grok.grok_code_fast_1_custom_code_query_solver_prompt import (
     GrokCodeFast1CustomQuerySolverPrompt,
 )
@@ -54,7 +57,7 @@ class GrokCodeFast1CustomCodeQuerySolverPromptHandler(BaseGrokCodeFast1Prompt):
         handlers = {"extended_thinking_handler": GrokCodeFast1ReasoningThinkingParser()}
         return cls.parse_streaming_text_block_events(
             events=llm_response.content,
-            parsers=[GrokCodeFast1CodeBlockParser()],
+            parsers=[GrokCodeFast1CodeBlockParser(), TaskPlanParser()],
             handlers=handlers,
         )
 
