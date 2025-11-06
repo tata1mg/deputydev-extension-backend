@@ -29,12 +29,14 @@ class ToolResponseManager:
             return tool_response.response if tool_response.response else {}
 
         if tool_response.tool_name == "focused_snippets_searcher":
+            batch_chunks = tool_response.response.get("batch_chunks_search", [])
+
             return {
                 "chunks": [
                     ChunkInfo(**chunk).get_xml()
-                    for search_response in tool_response.response["batch_chunks_search"]["response"]
-                    for chunk in search_response["chunks"]
-                ],
+                    for search_response in batch_chunks
+                    for chunk in search_response.get("chunks", [])
+                ]
             }
 
         if tool_response.tool_name == "iterative_file_reader":

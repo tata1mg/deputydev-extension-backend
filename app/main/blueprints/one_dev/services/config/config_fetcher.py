@@ -12,14 +12,6 @@ ConfigManager.configs
 
 class ConfigFetcher:
     essential_configs = {
-        ConfigConsumer.CLI: {
-            "NUMBER_OF_WORKERS": 1,
-            "HOST_AND_TIMEOUT": {
-                "HOST": ConfigManager.configs["ONE_DEV"]["HOST"],
-                "TIMEOUT": ConfigManager.configs["ONE_DEV"]["TIMEOUT"],
-            },
-            "BROWSER_HOST": ConfigManager.configs["BROWSER_HOST"],
-        },
         ConfigConsumer.VSCODE_EXT: {
             "NUMBER_OF_WORKERS": 1,
             "HOST_AND_TIMEOUT": {
@@ -27,6 +19,7 @@ class ConfigFetcher:
                 "TIMEOUT": ConfigManager.configs["ONE_DEV"]["TIMEOUT"],
             },
             "BROWSER_HOST": ConfigManager.configs["BROWSER_HOST"],
+            "ENABLE_EXTENSION_EMBEDDINGS": ConfigManager.configs["ENABLE_EXTENSION_EMBEDDINGS"],
             "BINARY": {},
             "DD_HOST_WS": ConfigManager.configs["DD_HOST_WS"],
             "DD_HOST_WS_NON_GATEWAY": ConfigManager.configs["DD_HOST_WS_NON_GATEWAY"],
@@ -40,37 +33,6 @@ class ConfigFetcher:
     }
 
     main_configs = {
-        ConfigConsumer.CLI: {
-            "CHUNKING": {
-                "CHARACTER_SIZE": ConfigManager.configs["CHUNKING"]["CHARACTER_SIZE"],
-                "NUMBER_OF_CHUNKS": ConfigManager.configs["CHUNKING"]["MAX_CHUNKS_CODE_GENERATION"],
-                "IS_LLM_RERANKING_ENABLED": ConfigManager.configs["CHUNKING"]["IS_LLM_RERANKING_ENABLED"],
-            },
-            "EMBEDDING": {
-                "MODEL": ConfigManager.configs["EMBEDDING"]["MODEL"],
-                "TOKEN_LIMIT": ConfigManager.configs["EMBEDDING"]["TOKEN_LIMIT"],
-                "MAX_PARALLEL_TASKS": 60,
-            },
-            "AUTH_TOKEN_ENV_VAR": "DEPUTYDEV_AUTH_TOKEN",
-            "POLLING_INTERVAL": 5,
-            "WEAVIATE_HOST": "127.0.0.1",
-            "WEAVIATE_HTTP_PORT": 8079,
-            "WEAVIATE_GRPC_PORT": 50050,
-            "ENABLED_FEATURES": [
-                "CODE_GENERATION",
-                "DOCS_GENERATION",
-                "TEST_GENERATION",
-                "TASK_PLANNER",
-                "ITERATIVE_CHAT",
-                "GENERATE_AND_APPLY_DIFF",
-                "PLAN_CODE_GENERATION",
-            ],
-            "PR_CREATION_ENABLED": True,
-            "USE_NEW_CHUNKING": True,
-            "USE_LLM_RE_RANKING": False,
-            "USE_VECTOR_DB": True,
-            "WEAVIATE_SCHEMA_VERSION": 5,
-        },
         ConfigConsumer.BINARY: {
             "CHUNKING": {
                 "CHARACTER_SIZE": ConfigManager.configs["BINARY"]["CHUNKING"]["CHARACTER_SIZE"],

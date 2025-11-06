@@ -154,6 +154,7 @@ class QuerySolverInput(BaseModel):
     search_web: Optional[bool] = False
     is_lsp_ready: Optional[bool] = False
     is_indexing_ready: Optional[bool] = False
+    is_embeddings_ready: Optional[bool] = False
     llm_model: Optional[LLMModel] = None
     reasoning: Optional[str] = None
     client_tools: List[ClientTool] = []

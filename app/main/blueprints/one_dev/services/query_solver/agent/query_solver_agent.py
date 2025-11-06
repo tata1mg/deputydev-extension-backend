@@ -67,10 +67,9 @@ from app.main.blueprints.one_dev.services.query_solver.tools.execute_command imp
 from app.main.blueprints.one_dev.services.query_solver.tools.file_path_searcher import (
     FILE_PATH_SEARCHER,
 )
-
-# from app.main.blueprints.one_dev.services.query_solver.tools.focused_snippets_searcher import (
-#     FOCUSED_SNIPPETS_SEARCHER,
-# )  # noqa: ERA001
+from app.main.blueprints.one_dev.services.query_solver.tools.focused_snippets_searcher import (
+    FOCUSED_SNIPPETS_SEARCHER,
+)
 from app.main.blueprints.one_dev.services.query_solver.tools.get_usage_tool import (
     GET_USAGE_TOOL,
 )
@@ -144,9 +143,11 @@ class QuerySolverAgent:
             EXECUTE_COMMAND,
             PUBLIC_URL_CONTENT_READER,
         ]
+        if payload.is_indexing_ready:
+            tools_to_use.append(FOCUSED_SNIPPETS_SEARCHER)
         if (
             ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"]
-            and payload.is_indexing_ready
+            and payload.is_embeddings_ready
             and compare_version(_client_data.client_version, "14.0.3", ">=")
         ):
             tools_to_use.append(SEMANTIC_SEARCH)
