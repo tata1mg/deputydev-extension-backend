@@ -147,7 +147,7 @@ class QuerySolverAgent:
             tools_to_use.append(FOCUSED_SNIPPETS_SEARCHER)
         if (
             ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"]
-            and payload.is_embeddings_ready
+            and (payload.is_embeddings_ready or payload.is_embedding_done)
             and compare_version(_client_data.client_version, "14.0.3", ">=")
         ):
             tools_to_use.append(SEMANTIC_SEARCH)

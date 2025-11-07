@@ -155,6 +155,7 @@ class QuerySolverInput(BaseModel):
     is_lsp_ready: Optional[bool] = False
     is_indexing_ready: Optional[bool] = False
     is_embeddings_ready: Optional[bool] = False
+    is_embedding_done: Optional[bool] = False  # deprecated, use is_embeddings_ready
     llm_model: Optional[LLMModel] = None
     reasoning: Optional[str] = None
     client_tools: List[ClientTool] = []
