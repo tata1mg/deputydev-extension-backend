@@ -137,16 +137,17 @@ class QuerySolverAgent:
     def get_all_first_party_tools(self, payload: QuerySolverInput, _client_data: ClientData) -> List[ConversationTool]:
         tools_to_use = [
             ASK_USER_INPUT,
-            FOCUSED_SNIPPETS_SEARCHER,
             FILE_PATH_SEARCHER,
             ITERATIVE_FILE_READER,
             GREP_SEARCH,
             EXECUTE_COMMAND,
             PUBLIC_URL_CONTENT_READER,
         ]
+        if payload.is_indexing_ready:
+            tools_to_use.append(FOCUSED_SNIPPETS_SEARCHER)
         if (
             ConfigManager.configs["IS_RELATED_CODE_SEARCHER_ENABLED"]
-            and payload.is_embedding_done
+            and (payload.is_embeddings_ready or payload.is_embedding_done)
             and compare_version(_client_data.client_version, "14.0.3", ">=")
         ):
             tools_to_use.append(SEMANTIC_SEARCH)

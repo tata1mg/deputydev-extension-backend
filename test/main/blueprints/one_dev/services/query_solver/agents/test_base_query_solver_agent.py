@@ -602,7 +602,7 @@ class TestQuerySolverAgent:
             user_team_id=1,
             session_type="test_session",
             llm_model=LLMModel.CLAUDE_3_POINT_7_SONNET,
-            is_embedding_done=True,
+            is_indexing_ready=True,
             search_web=False,
             is_lsp_ready=True,
             write_mode=True,

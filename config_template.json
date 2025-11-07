@@ -831,6 +831,7 @@
         "REVIEW_SOLVER_ENDPOINT": "/end_user/v1/ide-reviews/run-multi-agent-local-connection",
         "POST_PROCESS_SOLVER_ENDPOINT": "/end_user/v1/ide-reviews/post-process-local-connection"
     },
+    "ENABLE_EXTENSION_EMBEDDINGS": false,
     "POLLING_MAX_ATTEMPTS": 3000,
     "ALLOWED_EMAILS": [],
     "VERTEX": {

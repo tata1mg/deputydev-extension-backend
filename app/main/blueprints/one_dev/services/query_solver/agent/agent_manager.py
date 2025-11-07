@@ -1,6 +1,8 @@
+import asyncio
 from typing import List
 
 from deputydev_core.llm_handler.core.handler import LLMHandler
+from deputydev_core.utils.app_logger import AppLogger
 
 from app.main.blueprints.one_dev.models.dto.agent_chats import AgentChatDTO
 from app.main.blueprints.one_dev.services.query_solver.agent.query_solver_agent import QuerySolverAgent
@@ -13,13 +15,17 @@ from app.main.blueprints.one_dev.services.repository.query_solver_agents.reposit
 class AgentManager:
     """Handle agent-related operations for QuerySolver."""
 
-    async def generate_dynamic_query_solver_agents(self) -> List[QuerySolverAgent]:
-        """Generate list of available query solver agents."""
-        # get all the intents from the database
-        default_agent = QuerySolverAgent(
+    def get_default_agent(self) -> QuerySolverAgent:
+        """Return the default query solver agent."""
+        return QuerySolverAgent(
             agent_name="DEFAULT_QUERY_SOLVER_AGENT",
             agent_description="This is the default query solver agent that should used when no specific agent is solves the purpose",
         )
+
+    async def generate_dynamic_query_solver_agents(self) -> List[QuerySolverAgent]:
+        """Generate list of available query solver agents."""
+        # get all the intents from the database
+        default_agent = self.get_default_agent()
         all_agents = await QuerySolverAgentsRepository.get_query_solver_agents()
         if not all_agents:
             return [default_agent]
@@ -59,6 +65,7 @@ class AgentManager:
         if not all_agents:
             raise Exception("No query solver agents found in the system")
 
+        default_agent = self.get_default_agent()
         if payload.query:
             agent_selector = QuerySolverAgentSelector(
                 user_query=payload.query,
@@ -70,8 +77,11 @@ class AgentManager:
                 llm_handler=llm_handler,
                 session_id=payload.session_id,
             )
-
-            agent_instance = await agent_selector.select_agent()
+            try:
+                agent_instance = await asyncio.wait_for(agent_selector.select_agent(), timeout=5)
+            except asyncio.TimeoutError:
+                AppLogger.log_info("Agent selection timed out, using default query solver agent instead.")
+                agent_instance = default_agent
         else:
             agent_name = (
                 previous_agent_chats[-1].metadata.get("agent_name")
