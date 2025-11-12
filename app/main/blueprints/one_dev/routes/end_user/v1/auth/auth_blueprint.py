@@ -17,7 +17,7 @@ auth_v1_bp = Blueprint("auth_v1_bp", url_prefix="/auth")
 @auth_v1_bp.route("/verify-auth-token", methods=["POST"])
 @validate_client_version
 async def verify_auth_token(_request: Request, **kwargs: Any) -> ResponseDict | JSONResponse:
-    response = await DeputyDevAuthClient().verify_auth_token(headers=_request.headers)
+    response = await DeputyDevAuthClient().verify_auth_token(headers=_request.headers, params=_request.query_args)
     return send_response(response)
 
 
