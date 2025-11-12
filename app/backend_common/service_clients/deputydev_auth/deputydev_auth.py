@@ -45,9 +45,9 @@ class DeputyDevAuthClient:
         result = await self._request("GET", path, headers=headers)
         return result
 
-    async def verify_auth_token(self, headers: Dict[str, str]) -> Dict[str, Any]:
+    async def verify_auth_token(self, headers: Dict[str, str], params: Dict[str, str]) -> Dict[str, Any]:
         path = f"{self.get_auth_base_url()}{AuthEndpoint.VERIFY_AUTH_TOKEN.value}"
-        result = await self._request("POST", path, headers=headers)
+        result = await self._request("POST", path, headers=headers, params=params)
         return result
 
     async def sign_up(self, headers: Dict[str, str]) -> Dict[str, Any]:
