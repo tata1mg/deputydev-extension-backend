@@ -12,7 +12,7 @@ from deputydev_core.llm_handler.models.dto.message_thread_dto import (
 from app.backend_common.dataclasses.dataclasses import PromptCategories
 
 
-class BaseKimiCustomCodeQuerySolverPrompt:
+class BaseGlmCustomCodeQuerySolverPrompt:
     prompt_type = "CODE_QUERY_SOLVER"
     prompt_category = PromptCategories.CODE_GENERATION.value
 

@@ -425,8 +425,8 @@
                 "SAFE_HISTORY_TOKEN_LIMIT": 0
             }
         },
-        "OPENROUTER_GPT_5": {
-            "NAME": "openai/gpt-5",
+        "OPENROUTER_GPT_5_POINT_1": {
+            "NAME": "openai/gpt-5.1",
             "MAX_TOKENS": 24576,
             "INPUT_TOKENS_LIMIT": 272000,
             "TEMPERATURE": 0.3,
@@ -438,7 +438,7 @@
                 "SAFE_HISTORY_TOKEN_LIMIT": 20000
             }
         },
-        "OPENROUTER_GPT_5_CODEX": {
+        "OPENROUTER_GPT_5_POINT_1_CODEX": {
             "NAME": "openai/gpt-5-codex",
             "MAX_TOKENS": 24576,
             "INPUT_TOKENS_LIMIT": 272000,
@@ -900,20 +900,28 @@
         },
         {
             "id": 3,
-            "display_name": "Claude 3.7 Sonnet",
-            "name": "CLAUDE_3_POINT_7_SONNET",
-            "provider": "ANTHROPIC",
-            "multimodal": true
-        },
-        {
-            "id": 4,
-            "display_name": "GPT 5",
-            "name": "OPENROUTER_GPT_5",
+            "display_name": "GPT 5.1",
+            "name": "OPENROUTER_GPT_5_POINT_1",
             "provider": "OPENAI",
             "multimodal": true,
             "reasoning": {
                 "supported": [
                     "MINIMAL",
+                    "LOW",
+                    "MEDIUM",
+                    "HIGH"
+                ],
+                "default": "LOW"
+            }
+        },
+        {
+            "id": 4,
+            "display_name": "GPT 5.1 Codex",
+            "name": "OPENROUTER_GPT_5_POINT_1_CODEX",
+            "provider": "OPENAI",
+            "multimodal": true,
+            "reasoning": {
+                "supported": [
                     "LOW",
                     "MEDIUM",
                     "HIGH"
@@ -927,22 +935,6 @@
             "name": "OPENROUTER_GPT_5_MINI",
             "provider": "OPENAI",
             "multimodal": true
-        },
-        {
-            "id": 6,
-            "display_name": "GPT 5 Codex",
-            "name": "OPENROUTER_GPT_5_CODEX",
-            "provider": "OPENAI",
-            "multimodal": true,
-            "reasoning": {
-                "supported": [
-                    "MINIMAL",
-                    "LOW",
-                    "MEDIUM",
-                    "HIGH"
-                ],
-                "default": "MEDIUM"
-            }
         },
         {
             "id": 7,
@@ -974,15 +966,15 @@
         },
         {
             "id": 11,
-            "display_name": "Qwen 3 Coder",
-            "name": "QWEN_3_CODER",
+            "display_name": "GLM 4.6",
+            "name": "GLM_4_POINT_6",
             "provider": "OPEN SOURCE",
             "multimodal": false
         },
         {
             "id": 12,
-            "display_name": "Kimi K2",
-            "name": "KIMI_K2",
+            "display_name": "Kimi K2 Thinking",
+            "name": "KIMI_K2_THINKING",
             "provider": "OPEN SOURCE",
             "multimodal": false
         },

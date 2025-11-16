@@ -3,5 +3,5 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 )
 
 
-class KimiK2CustomQuerySolverPrompt(BaseKimiCustomCodeQuerySolverPrompt):
+class KimiK2ThinkingCustomQuerySolverPrompt(BaseKimiCustomCodeQuerySolverPrompt):
     pass

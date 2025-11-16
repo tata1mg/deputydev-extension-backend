@@ -5,5 +5,5 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 )
 
 
-class Gpt5CodexCustomCodeQuerySolverPromptHandler(Gpt5CustomCodeQuerySolverPromptHandler):
-    model_name = LLModels.OPENROUTER_GPT_5_CODEX
+class Gpt5Point1CodexCustomCodeQuerySolverPromptHandler(Gpt5CustomCodeQuerySolverPromptHandler):
+    model_name = LLModels.OPENROUTER_GPT_5_POINT_1_CODEX

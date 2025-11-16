@@ -29,7 +29,7 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 class Gpt5CustomCodeQuerySolverPromptHandler(BaseGpt5Prompt):
     prompt_type = "CODE_QUERY_SOLVER"
     prompt_category = PromptCategories.CODE_GENERATION.value
-    model_name = LLModels.OPENROUTER_GPT_5
+    model_name = LLModels.OPENROUTER_GPT_5_POINT_1
     prompt_class = Gpt5CustomQuerySolverPrompt
 
     def __init__(self, params: Dict[str, Any]) -> None:
