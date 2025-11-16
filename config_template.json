@@ -906,7 +906,6 @@
             "multimodal": true,
             "reasoning": {
                 "supported": [
-                    "MINIMAL",
                     "LOW",
                     "MEDIUM",
                     "HIGH"
