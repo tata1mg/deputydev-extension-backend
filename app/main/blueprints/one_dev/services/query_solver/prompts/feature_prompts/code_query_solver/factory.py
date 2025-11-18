@@ -52,6 +52,9 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.kimi_k2_thinking_coder_handler import (
     KimiK2ThinkingCustomCodeQuerySolverPromptHandler,
 )
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.qwen_3_coder_handler import (
+    Qwen3CoderCustomCodeQuerySolverPromptHandler,
+)
 
 
 class CodeQuerySolverPromptFactory(BaseFeaturePromptFactory):
@@ -60,6 +63,8 @@ class CodeQuerySolverPromptFactory(BaseFeaturePromptFactory):
         LLModels.CLAUDE_4_SONNET: Claude4CustomCodeQuerySolverPromptHandler,
         LLModels.CLAUDE_4_POINT_5_SONNET: Claude4Point5CustomCodeQuerySolverPromptHandler,
         LLModels.CLAUDE_4_SONNET_THINKING: Claude4ThinkingCustomCodeQuerySolverPromptHandler,
+        LLModels.GEMINI_3_PRO: Gemini2Point5ProCustomCodeQuerySolverPromptHandler,
+        LLModels.GEMINI_3_FLASH: Gemini2Point5FlashCustomCodeQuerySolverPromptHandler,
         LLModels.GEMINI_2_POINT_5_PRO: Gemini2Point5ProCustomCodeQuerySolverPromptHandler,
         LLModels.GEMINI_2_POINT_5_FLASH: Gemini2Point5FlashCustomCodeQuerySolverPromptHandler,
         LLModels.GEMINI_2_POINT_5_FLASH_LITE: Gemini2Point5FlashLiteCustomCodeQuerySolverPromptHandler,
@@ -72,6 +77,7 @@ class CodeQuerySolverPromptFactory(BaseFeaturePromptFactory):
         LLModels.OPENROUTER_GROK_CODE_FAST_1: GrokCodeFast1CustomCodeQuerySolverPromptHandler,
         LLModels.KIMI_K2_THINKING: KimiK2ThinkingCustomCodeQuerySolverPromptHandler,
         LLModels.GLM_4_POINT_6: Glm4point6CustomCodeQuerySolverPromptHandler,
+        LLModels.QWEN_3_CODER: Qwen3CoderCustomCodeQuerySolverPromptHandler,
     }
 
     @classmethod

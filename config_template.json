@@ -297,8 +297,8 @@
         },
         "CLAUDE_4_SONNET": {
             "ACCESS_KEY": "",
-            "INPUT_TOKENS_LIMIT": 150000,
-            "MAX_TOKENS": 8192,
+            "INPUT_TOKENS_LIMIT": 185000,
+            "MAX_TOKENS": 12288,
             "NAME": "us.anthropic.claude-sonnet-4-20250514-v1:0",
             "PROMPT_CACHING_SUPPORTED": true,
             "PROVIDER": "ANTHROPIC",
@@ -317,9 +317,9 @@
                 ]
             },
             "LIMITS": {
-                "UNSAFE_HISTORY_CHARACTER_LIMIT": 10000,
-                "SAFE_HISTORY_CHARACTER_LIMIT": 0,
-                "SAFE_HISTORY_TOKEN_LIMIT": 0
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 210000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 200000,
+                "SAFE_HISTORY_TOKEN_LIMIT": 190000
             }
         },
         "CLAUDE_4_SONNET_THINKING": {
@@ -355,8 +355,8 @@
         },
         "CLAUDE_4_POINT_5_SONNET": {
             "ACCESS_KEY": "",
-            "INPUT_TOKENS_LIMIT": 150000,
-            "MAX_TOKENS": 8192,
+            "INPUT_TOKENS_LIMIT": 185000,
+            "MAX_TOKENS": 12288,
             "NAME": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
             "PROMPT_CACHING_SUPPORTED": true,
             "PROVIDER": "ANTHROPIC",
@@ -371,9 +371,9 @@
                 ]
             },
             "LIMITS": {
-                "UNSAFE_HISTORY_CHARACTER_LIMIT": 10000,
-                "SAFE_HISTORY_CHARACTER_LIMIT": 0,
-                "SAFE_HISTORY_TOKEN_LIMIT": 0
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 210000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 200000,
+                "SAFE_HISTORY_TOKEN_LIMIT": 190000
             }
         },
         "GEMINI_2_POINT_5_PRO": {
@@ -384,9 +384,35 @@
             "THINKING_BUDGET_TOKENS": 4096,
             "TEMPERATURE": 0.5,
             "LIMITS": {
-                "UNSAFE_HISTORY_CHARACTER_LIMIT": 10000,
-                "SAFE_HISTORY_CHARACTER_LIMIT": 0,
-                "SAFE_HISTORY_TOKEN_LIMIT": 0
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 210000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 200000,
+                "SAFE_HISTORY_TOKEN_LIMIT": 190000
+            }
+        },
+        "GEMINI_3_PRO": {
+            "NAME": "gemini-3-pro",
+            "PROVIDER": "GOOGLE",
+            "INPUT_TOKENS_LIMIT": 200000,
+            "MAX_TOKENS": 20000,
+            "THINKING_BUDGET_TOKENS": 4096,
+            "TEMPERATURE": 0.5,
+            "LIMITS": {
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 210000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 200000,
+                "SAFE_HISTORY_TOKEN_LIMIT": 190000
+            }
+        },
+        "GEMINI_3_FLASH": {
+            "NAME": "gemini-3-flash",
+            "PROVIDER": "GOOGLE",
+            "MAX_TOKENS": 20000,
+            "INPUT_TOKENS_LIMIT": 200000,
+            "THINKING_BUDGET_TOKENS": 4096,
+            "TEMPERATURE": 0.5,
+            "LIMITS": {
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 210000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 200000,
+                "SAFE_HISTORY_TOKEN_LIMIT": 190000
             }
         },
         "GPT_4_POINT_1": {
@@ -433,9 +459,9 @@
             "STREAM_BATCH_SIZE": 10,
             "PROVIDER": {},
             "LIMITS": {
-                "UNSAFE_HISTORY_CHARACTER_LIMIT": 50000,
-                "SAFE_HISTORY_CHARACTER_LIMIT": 50000,
-                "SAFE_HISTORY_TOKEN_LIMIT": 20000
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 250000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 210000,
+                "SAFE_HISTORY_TOKEN_LIMIT": 270000
             }
         },
         "OPENROUTER_GPT_5_POINT_1_CODEX": {
@@ -446,9 +472,9 @@
             "STREAM_BATCH_SIZE": 10,
             "PROVIDER": {},
             "LIMITS": {
-                "UNSAFE_HISTORY_CHARACTER_LIMIT": 50000,
-                "SAFE_HISTORY_CHARACTER_LIMIT": 50000,
-                "SAFE_HISTORY_TOKEN_LIMIT": 20000
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 250000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 210000,
+                "SAFE_HISTORY_TOKEN_LIMIT": 270000
             }
         },
         "OPENROUTER_GPT_4_POINT_1": {
@@ -459,22 +485,22 @@
             "STREAM_BATCH_SIZE": 10,
             "PROVIDER": {},
             "LIMITS": {
-                "UNSAFE_HISTORY_CHARACTER_LIMIT": 100000,
-                "SAFE_HISTORY_CHARACTER_LIMIT": 100000,
-                "SAFE_HISTORY_TOKEN_LIMIT": 40000
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 250000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 210000,
+                "SAFE_HISTORY_TOKEN_LIMIT": 270000
             }
         },
         "OPENROUTER_GROK_CODE_FAST_1": {
             "NAME": "x-ai/grok-code-fast-1",
             "MAX_TOKENS": 10000,
-            "INPUT_TOKENS_LIMIT": 200000,
+            "INPUT_TOKENS_LIMIT": 240000,
             "TEMPERATURE": 0.3,
             "STREAM_BATCH_SIZE": 10,
             "PROVIDER": {},
             "LIMITS": {
-                "UNSAFE_HISTORY_CHARACTER_LIMIT": 50000,
-                "SAFE_HISTORY_CHARACTER_LIMIT": 50000,
-                "SAFE_HISTORY_TOKEN_LIMIT": 20000
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 250000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 210000,
+                "SAFE_HISTORY_TOKEN_LIMIT": 240000
             }
         },
         "OPENROUTER_GROK_4_FAST": {
@@ -485,9 +511,9 @@
             "STREAM_BATCH_SIZE": 10,
             "PROVIDER": {},
             "LIMITS": {
-                "UNSAFE_HISTORY_CHARACTER_LIMIT": 50000,
-                "SAFE_HISTORY_CHARACTER_LIMIT": 50000,
-                "SAFE_HISTORY_TOKEN_LIMIT": 20000
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 400000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 300000,
+                "SAFE_HISTORY_TOKEN_LIMIT": 400000
             }
         },
         "OPENROUTER_GPT_5_MINI": {
@@ -498,9 +524,9 @@
             "STREAM_BATCH_SIZE": 10,
             "PROVIDER": {},
             "LIMITS": {
-                "UNSAFE_HISTORY_CHARACTER_LIMIT": 50000,
-                "SAFE_HISTORY_CHARACTER_LIMIT": 50000,
-                "SAFE_HISTORY_TOKEN_LIMIT": 20000
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 250000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 210000,
+                "SAFE_HISTORY_TOKEN_LIMIT": 240000
             }
         },
         "OPENROUTER_GPT_5_NANO": {
@@ -534,6 +560,36 @@
                 "UNSAFE_HISTORY_CHARACTER_LIMIT": 50000,
                 "SAFE_HISTORY_CHARACTER_LIMIT": 50000,
                 "SAFE_HISTORY_TOKEN_LIMIT": 20000
+            }
+        },
+        "KIMI_K2_THINKING": {
+            "NAME": "moonshotai/kimi-k2-thinking",
+            "MAX_TOKENS": 12288,
+            "INPUT_TOKENS_LIMIT": 260000,
+            "TEMPERATURE": 0.5,
+            "STREAM_BATCH_SIZE": 50,
+            "REASONING": {
+                "effort": "medium"
+            },
+            "LIMITS": {
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 240000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 210000,
+                "SAFE_HISTORY_TOKEN_LIMIT": 250000
+            }
+        },
+        "GLM_4_POINT_6": {
+            "NAME": "z-ai/glm-4.6:exacto",
+            "MAX_TOKENS": 12288,
+            "INPUT_TOKENS_LIMIT": 200000,
+            "TEMPERATURE": 0.5,
+            "STREAM_BATCH_SIZE": 50,
+            "REASONING": {
+                "effort": "medium"
+            },
+            "LIMITS": {
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 200000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 180000,
+                "SAFE_HISTORY_TOKEN_LIMIT": 190000
             }
         },
         "QWEN_3_CODER": {
@@ -944,15 +1000,15 @@
         },
         {
             "id": 8,
-            "display_name": "Gemini 2.5 Pro",
-            "name": "GEMINI_2_POINT_5_PRO",
+            "display_name": "Gemini 3 Pro",
+            "name": "GEMINI_3_PRO",
             "provider": "GOOGLE",
             "multimodal": true
         },
         {
             "id": 9,
-            "display_name": "Gemini 2.5 Flash",
-            "name": "GEMINI_2_POINT_5_FLASH",
+            "display_name": "Gemini 3 Flash",
+            "name": "GEMINI_3_FLASH",
             "provider": "GOOGLE",
             "multimodal": true
         },
