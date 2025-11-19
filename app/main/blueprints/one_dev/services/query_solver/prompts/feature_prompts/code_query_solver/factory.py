@@ -31,6 +31,9 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.gpt_4_point_1_handler import (
     Gpt4Point1CustomCodeQuerySolverPromptHandler,
 )
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.gpt_5_codex_handler import (
+    Gpt5CodexCustomCodeQuerySolverPromptHandler,
+)
 from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.gpt_5_handler import (
     Gpt5CustomCodeQuerySolverPromptHandler,
 )
@@ -70,6 +73,7 @@ class CodeQuerySolverPromptFactory(BaseFeaturePromptFactory):
         LLModels.GEMINI_2_POINT_5_FLASH_LITE: Gemini2Point5FlashLiteCustomCodeQuerySolverPromptHandler,
         LLModels.OPENROUTER_GPT_5_MINI: Gpt5MiniCustomCodeQuerySolverPromptHandler,
         LLModels.OPENROUTER_GPT_5_NANO: Gpt5NanoCustomCodeQuerySolverPromptHandler,
+        LLModels.OPENROUTER_GPT_5_CODEX: Gpt5CodexCustomCodeQuerySolverPromptHandler,
         LLModels.OPENROUTER_GPT_5_POINT_1: Gpt5CustomCodeQuerySolverPromptHandler,
         LLModels.OPENROUTER_GPT_5_POINT_1_CODEX: Gpt5Point1CodexCustomCodeQuerySolverPromptHandler,
         LLModels.OPENROUTER_GPT_4_POINT_1: Gpt4Point1CustomCodeQuerySolverPromptHandler,
