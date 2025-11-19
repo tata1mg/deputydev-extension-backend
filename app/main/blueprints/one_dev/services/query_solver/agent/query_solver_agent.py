@@ -216,7 +216,7 @@ class QuerySolverAgent:
                 3. NO diff application
                 </restrictions>
                 <list_of_context_repositories>
-                {context_repos_str}
+                    {context_repos_str}
                 </list_of_context_repositories>
             </context_repositories>
             </repository_context>
