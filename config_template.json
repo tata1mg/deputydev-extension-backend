@@ -384,9 +384,9 @@
             "THINKING_BUDGET_TOKENS": 4096,
             "TEMPERATURE": 0.5,
             "LIMITS": {
-                "UNSAFE_HISTORY_CHARACTER_LIMIT": 210000,
-                "SAFE_HISTORY_CHARACTER_LIMIT": 200000,
-                "SAFE_HISTORY_TOKEN_LIMIT": 190000
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 500000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 400000,
+                "SAFE_HISTORY_TOKEN_LIMIT": 400000
             }
         },
         "GEMINI_3_PRO": {
