@@ -3,5 +3,5 @@ from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.c
 )
 
 
-class Qwen3CoderCustomCodeQuerySolverPrompt(BaseQwenCustomCodeQuerySolverPrompt):
+class Qwen3CoderCustomQuerySolverPrompt(BaseQwenCustomCodeQuerySolverPrompt):
     pass

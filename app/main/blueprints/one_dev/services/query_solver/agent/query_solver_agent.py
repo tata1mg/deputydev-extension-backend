@@ -200,9 +200,11 @@ class QuerySolverAgent:
                 <access_level>Full read/write access</access_level>
                 <allowed_operations>All read and write operations</allowed_operations>
                 <restrictions>No restrictions</restrictions>
-                <absolute_repo_path>{working_repo.repo_path}</absolute_repo_path>
+                <repo_path>{working_repo.repo_path}</repo_path>
                 <repo_name>{working_repo.repo_name}</repo_name>
-                <root_directory_context>{working_repo.root_directory_context}</root_directory_context>
+                <root_directory_context>
+                {working_repo.root_directory_context}
+                </root_directory_context>
             </working_repository>
             <context_repositories>
                 <purpose>Reference repositories for gathering context, examples, and understanding patterns</purpose>

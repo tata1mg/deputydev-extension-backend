@@ -6,31 +6,28 @@ from deputydev_core.llm_handler.dataclasses.main import (
     UserAndSystemMessages,
 )
 from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels, MessageData
-from deputydev_core.llm_handler.providers.openrouter_models.prompts.base_prompts.base_gpt_5 import (
-    BaseGpt5Prompt,
+from deputydev_core.llm_handler.providers.google.prompts.base_prompts.base_gemini_prompt_handler import (
+    BaseGeminiPromptHandler,
 )
 from pydantic import BaseModel
 
 from app.backend_common.dataclasses.dataclasses import PromptCategories
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.openrouter_models.code_block.gpt_5_code_block_parser import (
-    Gpt5CodeBlockParser,
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.gemini.code_block.base_code_block_parser import (
+    CodeBlockParser,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.openrouter_models.extended_thinking.gpt_5_reasoning_thinking_parser import (
-    Gpt5ReasoningThinkingParser,
-)
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.openrouter_models.task_plan.base_task_plan_parser import (
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.gemini.task_plan.base_task_plan_parser import (
     TaskPlanParser,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.prompts.gpt.gpt_5_custom_code_query_solver_prompt import (
-    Gpt5CustomQuerySolverPrompt,
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.prompts.gemini.gemini_3_pro_custom_code_query_solver_prompt import (
+    Gemini3ProCustomCodeQuerySolverPrompt,
 )
 
 
-class Gpt5CustomCodeQuerySolverPromptHandler(BaseGpt5Prompt):
+class Gemini3ProCustomCodeQuerySolverPromptHandler(BaseGeminiPromptHandler):
     prompt_type = "CODE_QUERY_SOLVER"
     prompt_category = PromptCategories.CODE_GENERATION.value
-    model_name = LLModels.OPENROUTER_GPT_5_POINT_1
-    prompt_class = Gpt5CustomQuerySolverPrompt
+    prompt_class = Gemini3ProCustomCodeQuerySolverPrompt
+    model_name = LLModels.GEMINI_3_PRO
 
     def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
@@ -54,11 +51,9 @@ class Gpt5CustomCodeQuerySolverPromptHandler(BaseGpt5Prompt):
 
     @classmethod
     async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[BaseModel]:
-        handlers = {"extended_thinking_handler": Gpt5ReasoningThinkingParser()}
         return cls.parse_streaming_text_block_events(
             events=llm_response.content,
-            parsers=[Gpt5CodeBlockParser(), TaskPlanParser()],
-            handlers=handlers,
+            parsers=[CodeBlockParser(), TaskPlanParser()],
         )
 
     @classmethod

@@ -5,31 +5,29 @@ from deputydev_core.llm_handler.dataclasses.main import (
     StreamingResponse,
     UserAndSystemMessages,
 )
-from deputydev_core.llm_handler.models.dto.message_thread_dto import MessageData
-from deputydev_core.llm_handler.providers.openrouter_models.prompts.base_prompts.base_kimi_k2 import (
-    BaseKimiK2Prompt,
+from deputydev_core.llm_handler.models.dto.message_thread_dto import LLModels, MessageData
+from deputydev_core.llm_handler.providers.google.prompts.base_prompts.base_gemini_prompt_handler import (
+    BaseGeminiPromptHandler,
 )
 from pydantic import BaseModel
 
 from app.backend_common.dataclasses.dataclasses import PromptCategories
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.openrouter_models.code_block.kimi_k2_code_block_parser import (
-    KimiK2CodeBlockParser,
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.gemini.code_block.base_code_block_parser import (
+    CodeBlockParser,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.openrouter_models.task_plan.base_task_plan_parser import (
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.gemini.task_plan.base_task_plan_parser import (
     TaskPlanParser,
 )
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.parsers.openrouter_models.thinking.kimi_k2_thinking_parser import (
-    KimiK2ThinkingParser,
-)
-from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.prompts.kimi.kimi_k2_custom_code_query_solver_prompt import (
-    KimiK2CustomQuerySolverPrompt,
+from app.main.blueprints.one_dev.services.query_solver.prompts.feature_prompts.code_query_solver.prompts.gemini.gemini_3_flash_custom_code_query_solver_prompt import (
+    Gemini3FlashCustomCodeQuerySolverPrompt,
 )
 
 
-class KimiK2CustomCodeQuerySolverPromptHandler(BaseKimiK2Prompt):
+class Gemini3FlashCustomCodeQuerySolverPromptHandler(BaseGeminiPromptHandler):
     prompt_type = "CODE_QUERY_SOLVER"
     prompt_category = PromptCategories.CODE_GENERATION.value
-    prompt_class = KimiK2CustomQuerySolverPrompt
+    prompt_class = Gemini3FlashCustomCodeQuerySolverPrompt
+    model_name = LLModels.GEMINI_3_FLASH
 
     def __init__(self, params: Dict[str, Any]) -> None:
         self.params = params
@@ -55,7 +53,7 @@ class KimiK2CustomCodeQuerySolverPromptHandler(BaseKimiK2Prompt):
     async def get_parsed_streaming_events(cls, llm_response: StreamingResponse) -> AsyncIterator[BaseModel]:
         return cls.parse_streaming_text_block_events(
             events=llm_response.content,
-            parsers=[KimiK2CodeBlockParser(), KimiK2ThinkingParser(), TaskPlanParser()],
+            parsers=[CodeBlockParser(), TaskPlanParser()],
         )
 
     @classmethod
