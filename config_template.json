@@ -1008,34 +1008,27 @@
         },
         {
             "id": 8,
-            "display_name": "Gemini 2.5 Flash",
-            "name": "GEMINI_2_POINT_5_FLASH",
-            "provider": "GOOGLE",
-            "multimodal": true
-        },
-        {
-            "id": 9,
             "display_name": "GLM 4.6",
             "name": "GLM_4_POINT_6",
             "provider": "OPEN SOURCE",
             "multimodal": false
         },
         {
-            "id": 10,
+            "id": 9,
             "display_name": "Kimi K2 Thinking",
             "name": "KIMI_K2_THINKING",
             "provider": "OPEN SOURCE",
             "multimodal": false
         },
         {
-            "id": 11,
+            "id": 10,
             "display_name": "Grok Code Fast 1",
             "name": "OPENROUTER_GROK_CODE_FAST_1",
             "provider": "xAI",
             "multimodal": false
         },
         {
-            "id": 12,
+            "id": 11,
             "display_name": "Grok 4 Fast",
             "name": "OPENROUTER_GROK_4_FAST",
             "provider": "xAI",
