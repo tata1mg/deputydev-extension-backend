@@ -397,8 +397,8 @@
             "THINKING_BUDGET_TOKENS": 4096,
             "TEMPERATURE": 0.5,
             "LIMITS": {
-                "UNSAFE_HISTORY_CHARACTER_LIMIT": 210000,
-                "SAFE_HISTORY_CHARACTER_LIMIT": 200000,
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 300000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 220000,
                 "SAFE_HISTORY_TOKEN_LIMIT": 190000
             }
         },
@@ -410,8 +410,8 @@
             "THINKING_BUDGET_TOKENS": 4096,
             "TEMPERATURE": 0.5,
             "LIMITS": {
-                "UNSAFE_HISTORY_CHARACTER_LIMIT": 210000,
-                "SAFE_HISTORY_CHARACTER_LIMIT": 200000,
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 300000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 220000,
                 "SAFE_HISTORY_TOKEN_LIMIT": 190000
             }
         },
@@ -422,9 +422,9 @@
             "INPUT_TOKENS_LIMIT": 524288,
             "STREAM_BATCH_SIZE": 10,
             "LIMITS": {
-                "UNSAFE_HISTORY_CHARACTER_LIMIT": 10000,
-                "SAFE_HISTORY_CHARACTER_LIMIT": 0,
-                "SAFE_HISTORY_TOKEN_LIMIT": 0
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 1000000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 700000,
+                "SAFE_HISTORY_TOKEN_LIMIT": 524288
             }
         },
         "GPT_4_POINT_1_MINI": {
@@ -459,8 +459,8 @@
             "STREAM_BATCH_SIZE": 10,
             "PROVIDER": {},
             "LIMITS": {
-                "UNSAFE_HISTORY_CHARACTER_LIMIT": 250000,
-                "SAFE_HISTORY_CHARACTER_LIMIT": 210000,
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 300000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 270000,
                 "SAFE_HISTORY_TOKEN_LIMIT": 270000
             }
         },
@@ -472,8 +472,8 @@
             "STREAM_BATCH_SIZE": 10,
             "PROVIDER": {},
             "LIMITS": {
-                "UNSAFE_HISTORY_CHARACTER_LIMIT": 250000,
-                "SAFE_HISTORY_CHARACTER_LIMIT": 210000,
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 300000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 270000,
                 "SAFE_HISTORY_TOKEN_LIMIT": 270000
             }
         },
@@ -485,8 +485,8 @@
             "STREAM_BATCH_SIZE": 10,
             "PROVIDER": {},
             "LIMITS": {
-                "UNSAFE_HISTORY_CHARACTER_LIMIT": 250000,
-                "SAFE_HISTORY_CHARACTER_LIMIT": 210000,
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 300000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 270000,
                 "SAFE_HISTORY_TOKEN_LIMIT": 270000
             }
         },
@@ -498,8 +498,8 @@
             "STREAM_BATCH_SIZE": 10,
             "PROVIDER": {},
             "LIMITS": {
-                "UNSAFE_HISTORY_CHARACTER_LIMIT": 250000,
-                "SAFE_HISTORY_CHARACTER_LIMIT": 210000,
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 300000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 270000,
                 "SAFE_HISTORY_TOKEN_LIMIT": 270000
             }
         },
@@ -511,8 +511,8 @@
             "STREAM_BATCH_SIZE": 10,
             "PROVIDER": {},
             "LIMITS": {
-                "UNSAFE_HISTORY_CHARACTER_LIMIT": 250000,
-                "SAFE_HISTORY_CHARACTER_LIMIT": 210000,
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 500000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 270000,
                 "SAFE_HISTORY_TOKEN_LIMIT": 270000
             }
         },
@@ -524,8 +524,8 @@
             "STREAM_BATCH_SIZE": 10,
             "PROVIDER": {},
             "LIMITS": {
-                "UNSAFE_HISTORY_CHARACTER_LIMIT": 250000,
-                "SAFE_HISTORY_CHARACTER_LIMIT": 210000,
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 300000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 250000,
                 "SAFE_HISTORY_TOKEN_LIMIT": 240000
             }
         },
@@ -537,8 +537,8 @@
             "STREAM_BATCH_SIZE": 10,
             "PROVIDER": {},
             "LIMITS": {
-                "UNSAFE_HISTORY_CHARACTER_LIMIT": 400000,
-                "SAFE_HISTORY_CHARACTER_LIMIT": 300000,
+                "UNSAFE_HISTORY_CHARACTER_LIMIT": 500000,
+                "SAFE_HISTORY_CHARACTER_LIMIT": 400000,
                 "SAFE_HISTORY_TOKEN_LIMIT": 400000
             }
         },
