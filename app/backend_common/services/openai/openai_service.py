@@ -8,7 +8,7 @@ from deputydev_core.utils.config_manager import ConfigManager
 from deputydev_core.utils.context_vars import get_context_value
 from sanic.log import logger
 
-from app.backend_common.caches.common import CommonCache
+from app.backend_common.caches.embedding_cache import EmbeddingCache
 from app.backend_common.constants.error_messages import ErrorMessages
 from app.backend_common.service_clients.openai.openai import OpenAIServiceClient
 from app.backend_common.services.openai.base_client import BaseClient
@@ -112,14 +112,14 @@ class OpenAIManager(BaseClient):
         embeddings: List[np.ndarray] = [None] * len(batch)
         cache_keys = [f"{key}:{hash_sha256(text)}" if key else hash_sha256(text) for text in batch]
         try:
-            for i, cache_value in enumerate(await CommonCache.mget(cache_keys)):
+            for i, cache_value in enumerate(await EmbeddingCache.mget(cache_keys)):
                 expire_batch = []
                 if cache_value:
                     embeddings[i] = np.frombuffer(cache_value, dtype=np.float32)
                     key_used = cache_keys[i]
                     expire_batch.append(key_used)
                 if expire_batch:
-                    await CommonCache.expire_many(expire_batch, CommonCache._expire_in_sec)
+                    await EmbeddingCache.expire_many(expire_batch, EmbeddingCache._expire_in_sec)
         except Exception as e:  # noqa: BLE001
             logger.exception(e)
 
@@ -141,8 +141,8 @@ class OpenAIManager(BaseClient):
                 batch_keys = cache_keys[i : i + 10]
                 batch_embeddings = embeddings[i : i + 10]
 
-                # Store the current batch in Redis
-                await CommonCache.mset_with_expire(
+                # Store the current batch in Redis (using dedicated embedding Redis instance)
+                await EmbeddingCache.mset_with_expire(
                     {cache_key: embedding for cache_key, embedding in zip(batch_keys, batch_embeddings)}
                 )
             embeddings = np.array(embeddings)
