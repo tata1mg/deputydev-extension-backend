@@ -8,6 +8,7 @@ class Encoding:
 
 
 DEFAULT_CACHE_LABEL = "global"
+EMBEDDING_CACHE_LABEL = "embedding"
 DEFAULT_REDIS_HOST = "localhost"
 DEFAULT_REDIS_PORT = 6379
 DEFAULT_TIMEOUT = 2  # 2 sec

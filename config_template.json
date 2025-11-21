@@ -91,9 +91,18 @@
     },
     "REDIS_CACHE_HOSTS": {
         "genai": {
-            "LABEL": "",
+            "LABEL": "global",
             "REDIS_HOST": "deputydev-redis",
-            "REDIS_PORT": 6379
+            "REDIS_PORT": 6379,
+            "TIMEOUT": 2,
+            "CONN_LIMIT": 50
+        },
+        "embedding": {
+            "LABEL": "embedding",
+            "REDIS_HOST": "deputydev-redis-embedding",
+            "REDIS_PORT": 6379,
+            "TIMEOUT": 2,
+            "CONN_LIMIT": 100
         }
     },
     "REPO_BASE_DIR": "",
