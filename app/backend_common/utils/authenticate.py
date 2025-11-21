@@ -64,7 +64,7 @@ def authenticate(func: Any) -> Any:
                     "status": "NOT_VERIFIED",
                 }
                 await args[0].send(json.dumps(error_data))
-            raise BadRequestException(str(ex), sentry_raise=False)
+            raise BadRequestException(str(ex), sentry_raise=True)
         kwargs = {
             **kwargs,
             "auth_data": auth_data,
