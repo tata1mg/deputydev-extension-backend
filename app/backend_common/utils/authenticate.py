@@ -9,6 +9,7 @@ from app.backend_common.service_clients.deputydev_auth.deputydev_auth import Dep
 from app.backend_common.utils.dataclasses.main import AuthData, ClientData
 from app.backend_common.utils.sanic_wrapper import Request
 from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
+from deputydev_core.utils.app_logger import AppLogger
 
 
 async def get_auth_data(request: Request) -> Tuple[AuthData, Dict[str, Any]]:  # noqa: C901
@@ -37,10 +38,13 @@ async def get_auth_data(request: Request) -> Tuple[AuthData, Dict[str, Any]]:  #
         "enable_grace_period": str(enable_grace_period).lower(),
     }
 
-    auth_response = await DeputyDevAuthClient().get_auth_data(headers=headers, params=params)
-    auth_data: AuthData = AuthData(**auth_response["auth_data"])
-
-    return auth_data, auth_response["response_headers"]
+    try:
+        auth_response = await DeputyDevAuthClient().get_auth_data(headers=headers, params=params)
+        auth_data: AuthData = AuthData(**auth_response["auth_data"])
+        return auth_data, auth_response["response_headers"]
+    except Exception as ex:
+        AppLogger.log_error(str(ex))
+        raise ex
 
 
 def authenticate(func: Any) -> Any:
