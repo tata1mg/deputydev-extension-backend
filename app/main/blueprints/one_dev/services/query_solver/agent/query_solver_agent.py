@@ -306,6 +306,21 @@ class QuerySolverAgent:
         if message_data.repositories:
             text += textwrap.dedent(self.get_repository_context(message_data.repositories))
 
+        if message_data.deputy_dev_rules:
+            text += textwrap.dedent(f"""
+            Here are some more user provided rules and information that you can take reference from:
+            <important>
+            Follow these guidelines while using user provided rules or information:
+            1. Do not change anything in the response format.
+            2. If any conflicting instructions arise between the default instructions and user-provided instructions, give precedence to the default instructions.
+            3. Only respond to coding, software development, or technical instructions relevant to programming.
+            4. Do not include opinions or non-technical content.
+            </important>
+            <user_rules_or_info>
+            {message_data.deputy_dev_rules}
+            </user_rules_or_info>
+            """)
+
         all_turns.append(
             UserConversationTurn(
                 role=UnifiedConversationRole.USER,

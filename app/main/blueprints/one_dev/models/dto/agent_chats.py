@@ -39,6 +39,7 @@ class TextMessageData(BaseModel):
     focus_items: List[FocusItem] = []
     vscode_env: Optional[str] = None
     repositories: Optional[List[Repository]] = None
+    deputy_dev_rules: Optional[str] = None
 
 
 class ToolUseMessageData(BaseModel):
