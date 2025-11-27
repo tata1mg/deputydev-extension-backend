@@ -124,6 +124,7 @@ class CoreProcessor:
                     focus_items=payload.focus_items,
                     vscode_env=payload.vscode_env,
                     repositories=payload.repositories,
+                    deputy_dev_rules=payload.deputy_dev_rules,
                 ),
                 message_type=ChatMessageType.TEXT,
                 metadata={
