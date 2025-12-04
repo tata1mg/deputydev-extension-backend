@@ -395,7 +395,7 @@
             "INPUT_TOKENS_LIMIT": 400000,
             "MAX_TOKENS": 20000,
             "THINKING_BUDGET_TOKENS": 4096,
-            "TEMPERATURE": 0.5,
+            "TEMPERATURE": 1.0,
             "LIMITS": {
                 "UNSAFE_HISTORY_CHARACTER_LIMIT": 500000,
                 "SAFE_HISTORY_CHARACTER_LIMIT": 400000,
