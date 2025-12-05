@@ -132,6 +132,17 @@ async def run_multi_agent_review(_request: Request, **kwargs: Any) -> ResponseDi
         )
         return send_response({"status": "SESSION_EXPIRED"})
 
+    manager = PostProcessWebSocketManager(connection_id, is_local)
+    await manager.initialize_aws_client()
+
+    start_data = {"type": "STREAM_START"}
+    if auth_data and auth_data.session_refresh_token:
+        start_data["new_session_data"] = auth_data.session_refresh_token
+
+    await manager.push_to_connection_stream(
+        WebSocketMessage(type="STREAM_START", data=start_data),
+        local_testing_stream_buffer,
+    )
     try:
         payload_dict = _request.json["body"]
         if "connection_id" not in payload_dict:
@@ -292,6 +303,18 @@ async def post_process_extension_review(_request: Request, **kwargs: Any) -> Res
             local_testing_stream_buffer,
         )
         return send_response({"status": "SESSION_EXPIRED"})
+
+    manager = PostProcessWebSocketManager(connection_id, is_local)
+    await manager.initialize_aws_client()
+
+    start_data = {"type": "STREAM_START"}
+    if auth_data and auth_data.session_refresh_token:
+        start_data["new_session_data"] = auth_data.session_refresh_token
+
+    await manager.push_to_connection_stream(
+        WebSocketMessage(type="STREAM_START", data=start_data),
+        local_testing_stream_buffer,
+    )
 
     try:
         payload_dict = _request.json["body"]
