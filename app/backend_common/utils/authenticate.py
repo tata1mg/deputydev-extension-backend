@@ -2,6 +2,7 @@ import json
 from functools import wraps
 from typing import Any, Dict, Tuple
 
+import aiohttp
 from deputydev_core.utils.context_value import ContextValue
 from sanic.server.websockets.impl import WebsocketImplProtocol
 
@@ -54,21 +55,56 @@ def authenticate(func: Any) -> Any:
 
     @wraps(func)
     async def wrapper(request: Request, *args: Any, **kwargs: Any) -> Any:
+        client_data: ClientData = kwargs.get("client_data")
+
         try:
             # Get the auth data
-            client_data: ClientData = kwargs.get("client_data")
             auth_data, response_headers = await get_auth_data(request)
             kwargs["response_headers"] = response_headers
             ContextValue.set("response_headers", response_headers)
-        except Exception as ex:  # noqa: BLE001
+
+        except aiohttp.ClientResponseError as ex:
+            upstream_status = getattr(ex, "status", None) or 500
+            upstream_message = str(ex)
+
+            # Websocket path: send error + close with auth-specific close code + return (no raise)
             if args and isinstance(args[0], WebsocketImplProtocol):
-                error_data = {
+                ws = args[0]
+                error_data : dict[str, Any] = {
                     "type": "STREAM_ERROR",
                     "message": "Unable to authenticate user",
                     "status": "NOT_VERIFIED",
+                    "upstream_status": upstream_status,
                 }
-                await args[0].send(json.dumps(error_data))
-            raise BadRequestException(str(ex), sentry_raise=True)
+                await ws.send(json.dumps(error_data))
+                await ws.close(code=4401, reason="NOT_VERIFIED")
+                return
+
+            # HTTP path: surface the upstream status (401/403/etc.)
+            raise BadRequestException(
+                upstream_message,
+                status_code=upstream_status,
+                sentry_raise=True,
+            )
+
+        except Exception as ex:  # noqa: BLE001
+            if args and isinstance(args[0], WebsocketImplProtocol):
+                ws = args[0]
+                error_data = {
+                    "type": "STREAM_ERROR",
+                    "message": "Auth service unavailable",
+                    "status": "NOT_VERIFIED",
+                }
+                await ws.send(json.dumps(error_data))
+                await ws.close(code=1011, reason="AUTH_UNAVAILABLE")
+                return
+
+            raise BadRequestException(
+                str(ex),
+                status_code=503,
+                sentry_raise=True,
+            )
+
         kwargs = {
             **kwargs,
             "auth_data": auth_data,
