@@ -231,6 +231,7 @@
         "MULTI_AGENT_ENABLED": true,
         "REFLECTION_ENABLED": true
     },
+    "MIN_SUPPORTED_VSCODE_EXT_VERSION": "16.0.0",
     "AWS": {
         "GLOBAL": {
             "ACCESS_KEY_ID": "DUMMY_ACCESS_KEY_ID",

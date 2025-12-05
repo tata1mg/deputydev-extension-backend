@@ -12,7 +12,6 @@ from app.backend_common.utils.sanic_wrapper import Request
 from app.backend_common.utils.sanic_wrapper.exceptions import BadRequestException
 from app.main.blueprints.one_dev.constants.constants import (
     MIN_SUPPORTED_CLI_VERSION,
-    MIN_SUPPORTED_VSCODE_EXT_VERSION,
     MIN_SUPPORTED_WEB_VERSION,
 )
 from app.main.blueprints.one_dev.services.query_solver.dataclasses.main import StreamErrorData
@@ -39,9 +38,9 @@ def validate_version(client: Clients, client_version: str) -> Tuple[bool, Option
     elif client == Clients.PR_REVIEW:
         pass
     else:
-        is_valid = compare_version(client_version, MIN_SUPPORTED_VSCODE_EXT_VERSION, ">=")
+        min_version_supported = ConfigManager.configs["MIN_SUPPORTED_VSCODE_EXT_VERSION"]
+        is_valid = compare_version(client_version, min_version_supported, ">=")
         if not is_valid:
-            min_version_supported = MIN_SUPPORTED_VSCODE_EXT_VERSION
             download_link = ConfigManager.configs["CLIENT_DOWNLOAD_LINKS"].get(client.value)
 
     return is_valid, min_version_supported, download_link
